@@ -53,12 +53,6 @@ def get_args() -> argparse.Namespace:
         default="store",
     )
 
-    # subparsers = parser.add_subparsers(help="sub-command help")
-    # parser_store = subparsers.add_parser(
-    #    "store", help="Zip, encrypt and store directories in S3."
-    # )
-    # parser_store.set_defaults(mode="store")
-
     parser.add_argument(
         "--directories",
         type=str,
@@ -75,11 +69,7 @@ def get_args() -> argparse.Namespace:
         required=True,
     )
     parser.add_argument(
-        "--key",
-        type=str,
-        action="store",
-        help="the encryption key",
-        required=True,
+        "--key", type=str, action="store", help="the encryption key", required=True,
     )
     parser.add_argument(
         "--force",
@@ -152,12 +142,19 @@ def main():
     if args.mode == "watch":
         # watch mode
         logger.debug("Starting in WATCH mode")
+        process_limit = 5
+        if len(args.directories) > process_limit:
+            logger.info(f"Maximum number of watched directories is {process_limit}")
+            return
+
+        watcher = DirectoryWatcher()
         for directory in args.directories:
             logger.debug(f"Starting watch for {directory}")
-            DirectoryWatcher(
+            watcher.add_watched_directory(
                 directory, args.key, args.s3_bucket, args.force
-            ).run()
+            )
             logger.debug(f"Started watch for {directory}")
+        watcher.run()
     else:
         # store mode
         logger.debug("Starting in STORE mode")

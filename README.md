@@ -22,5 +22,4 @@ TODO
 * Fix salt
 * Unit tests
 * e2e tests
-* Docs
-* update pipfile
+* Docs 

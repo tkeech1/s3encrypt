@@ -1,0 +1,17 @@
+-i https://pypi.org/simple
+argparse==1.4.0
+boto3==1.14.12
+botocore==1.17.12
+cffi==1.14.0
+cryptography==2.9.2
+docutils==0.15.2
+git+https://github.com/Tinche/cattrs.git@574c412a7da1618f52179ddbf682b1b7fdf95dd0#egg=cattrs
+jmespath==0.10.0
+pathtools==0.1.2
+pycparser==2.20
+python-dateutil==2.8.1
+s3transfer==0.3.3
+six==1.15.0
+typing-extensions==3.7.4.2
+urllib3==1.25.9 ; python_version != '3.4'
+watchdog==0.10.3

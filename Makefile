@@ -6,10 +6,10 @@ AWS_REGION?=AWS_REGION
 # run 'make deps-dev' prior to running any other targets
 
 # run as a module
-run-module: format lint #test	
+run-module: format lint test	
 	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --force 
 
-run-module-watch: format lint #test	
+run-module-watch: format lint test	
 	python -m s3encrypt --log-level DEBUG --mode watch --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --force 
 
 run-entry-point: uninstall-wheel clean build-wheel install-wheel
@@ -30,9 +30,12 @@ run-profile-memory:
 run-profile-text:	
 	python -m cProfile -s time runner.py > profile.txt
 
+# requirements.txt is needed for snyk integration
+create-requirementstxt:
+	pipenv lock -r > requirements.txt
 
 debug-test:
-	python -m pytest -s
+	python -m pytest -sv
 	# using more processes makes it slower for a small number of tests
 	# --numprocesses=auto
 	
