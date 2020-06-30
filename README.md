@@ -2,7 +2,7 @@ s3encrypt
 -----------
 
 [![Known Vulnerabilities](https://snyk.io/test/github/tkeech1/s3encrypt/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/tkeech1/s3encrypt?targetFile=requirements.txt)
-![s3encrypt](https://github.com/tkeech1/s3encrypt/workflows/Python%20application/badge.svg)
+![s3encrypt](https://github.com/tkeech1/s3encrypt/workflows/Python%20application/badge.svg?branch=master)
 
 A python program to compress and encrypt the contents of a directory and store in S3.
 
