@@ -33,8 +33,10 @@ class DirectoryWatcher:
         self.__event_observer.stop()
         self.__event_observer.join()
 
-    def add_watched_directory(self, src_path, key, s3_bucket, force):
-        event_handler = DirectoryChangeEventHandler(src_path, key, s3_bucket, force)
+    def add_watched_directory(self, src_path, key, salt, s3_bucket, force):
+        event_handler = DirectoryChangeEventHandler(
+            src_path, key, salt, s3_bucket, force
+        )
         self.__schedule(event_handler, src_path)
 
     def __schedule(self, event_handler, src_path):
@@ -46,10 +48,11 @@ class DirectoryChangeEventHandler(FileSystemEventHandler):
 
     # FILE_REGEX = [r".*"]
 
-    def __init__(self, src_path, key, s3_bucket, force):
+    def __init__(self, src_path, key, salt, s3_bucket, force):
         # super().__init__(self.FILE_REGEX)
         self.__src_path = src_path
         self.__key = key
+        self.__salt = salt
         self.__s3_bucket = s3_bucket
         self.__force = force
         super().__init__()
@@ -65,7 +68,9 @@ class DirectoryChangeEventHandler(FileSystemEventHandler):
     def process(self, event):
         # check to see if the file size is increasing - if the file is
         # not finished being copied, need to wait for it to finish
-        if isinstance(event, FileCreatedEvent) or isinstance(event, FileModifiedEvent):
+        if isinstance(event, FileCreatedEvent) or isinstance(
+            event, FileModifiedEvent
+        ):
             file_size = -1
             while file_size != os.path.getsize(event.src_path):
                 file_size = os.path.getsize(event.src_path)
@@ -73,5 +78,9 @@ class DirectoryChangeEventHandler(FileSystemEventHandler):
 
         logger.debug(f"Filesystem event: {event}")
         compress_encrypt_store(
-            self.__src_path, self.__key, self.__s3_bucket, self.__force
+            self.__src_path,
+            self.__key,
+            self.__salt,
+            self.__s3_bucket,
+            self.__force,
         )

@@ -7,10 +7,11 @@ AWS_REGION?=AWS_REGION
 
 # run as a module
 run-module: format lint test	
-	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --force 
+	#python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt \xd8\xfeM\x99\xe8]\xd3-RR\x8a\x10C\x8a%\xa4 --force 
+	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
 
 run-module-watch: format lint test	
-	python -m s3encrypt --log-level DEBUG --mode watch --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --force 
+	python -m s3encrypt --log-level DEBUG --mode watch --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
 
 run-entry-point: uninstall-wheel clean build-wheel install-wheel
 	.venv/bin/s3encrypt-retriever --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --force 

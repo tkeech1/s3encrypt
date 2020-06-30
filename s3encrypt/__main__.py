@@ -69,7 +69,14 @@ def get_args() -> argparse.Namespace:
         required=True,
     )
     parser.add_argument(
-        "--key", type=str, action="store", help="the encryption key", required=True,
+        "--key",
+        type=str,
+        action="store",
+        help="the encryption key",
+        required=True,
+    )
+    parser.add_argument(
+        "--salt", type=str, action="store", help="the salt", required=True,
     )
     parser.add_argument(
         "--force",
@@ -100,6 +107,7 @@ async def main_async(args: argparse.Namespace) -> typing.Any:
                 s3encrypt_async(
                     directories=args.directories,
                     key=args.key,
+                    salt=args.salt,
                     s3_bucket=args.s3_bucket,
                     force=args.force,
                     timeout=timeout,
@@ -144,14 +152,16 @@ def main():
         logger.debug("Starting in WATCH mode")
         process_limit = 5
         if len(args.directories) > process_limit:
-            logger.info(f"Maximum number of watched directories is {process_limit}")
+            logger.info(
+                f"Maximum number of watched directories is {process_limit}"
+            )
             return
 
         watcher = DirectoryWatcher()
         for directory in args.directories:
             logger.debug(f"Starting watch for {directory}")
             watcher.add_watched_directory(
-                directory, args.key, args.s3_bucket, args.force
+                directory, args.key, args.salt, args.s3_bucket, args.force
             )
             logger.debug(f"Started watch for {directory}")
         watcher.run()

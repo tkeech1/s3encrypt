@@ -16,10 +16,8 @@ s3encrypt store LOCAL_DIRECTORY(S) S3_BUCKETNAME S3_FILENAME ENCRYPTION_KEY
 TODO
 ----
 
-* File watch and automatic upload
 * Logging to file
 * Integration with KMS
-* Fix salt
 * Unit tests
 * e2e tests
 * Docs 

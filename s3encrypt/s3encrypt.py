@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def compress_encrypt_store(
-    directory: str, key: str, s3_bucket: str, force: bool
+    directory: str, key: str, salt: str, s3_bucket: str, force: bool
 ) -> typing.Dict[str, str]:
 
     try:
@@ -42,21 +42,25 @@ def compress_encrypt_store(
         )
 
         logger.debug(
-            f"Starting to create compressed compressed file for {directory}"
-            + " at {compressed_file_path}"
+            f"Starting to create compressed file for {directory}"
+            + f" at {compressed_file_path}"
         )
         compress_directory(directory, compressed_file_path)
         logger.debug(
-            f"Starting to create compressed compressed file {directory}"
-            + " at {compressed_file_path}"
+            f"Finished creating compressed file for {directory}"
+            + f" at {compressed_file_path}"
         )
 
         logger.debug(
             f"Starting to create encrypted file for {directory} at "
             + f"{encrypted_file_path}"
         )
-        salt = generate_salt()
-        encrypt_file(compressed_file_path, encrypted_file_path, key, salt)
+        encrypt_file(
+            compressed_file_path,
+            encrypted_file_path,
+            key,
+            bytes(salt, "utf-8"),
+        )
         logger.info(
             f"Finished creating encrypted file for {directory} at {encrypted_file_path}"
         )
@@ -84,7 +88,7 @@ def compress_encrypt_store(
         ciphertext = read_file_content(
             f"testfiles/s3_downloads/{os.path.basename(directory)}.zip.enc",
         )
-        plaintext = decrypt(ciphertext, key, salt)
+        plaintext = decrypt(ciphertext, key, bytes(salt, "utf-8"))
         write_file(
             plaintext,
             f"testfiles/s3_downloads/{os.path.basename(directory)}.zip",
@@ -150,7 +154,6 @@ def encrypt_file(
 ):
     try:
         plaintext = read_file_content(file_path)
-        logger.info(f"Using salt: {str(salt)} for {encrypted_file_path}")
         ciphertext = encrypt(plaintext, key, salt)
         write_file(ciphertext, encrypted_file_path)
 
@@ -161,10 +164,6 @@ def encrypt_file(
             + f"encrypted_file_path={encrypted_file_path}"
         )
         raise S3EncryptError(" s3encrypt encountered an error ", e)
-
-
-def generate_salt() -> bytes:
-    return os.urandom(16)
 
 
 def derive_encryption_key(
@@ -269,6 +268,7 @@ def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str):
 async def s3encrypt_async(
     directories: typing.List[str],
     key: str,
+    salt: str,
     s3_bucket: str,
     force: bool,
     timeout: int,
@@ -310,6 +310,7 @@ async def s3encrypt_async(
                     compress_encrypt_store,
                     directory,
                     key,
+                    salt,
                     s3_bucket,
                     force,
                 )

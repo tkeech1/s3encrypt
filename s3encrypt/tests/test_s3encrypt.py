@@ -6,7 +6,6 @@ from s3encrypt.s3encrypt import (
     write_file,
     encrypt,
     decrypt,
-    generate_salt,
     validate_directory,
 )
 
@@ -83,9 +82,3 @@ def test_encrypt():
         with pytest.raises(Exception) as exception_info:
             ciphertext = decrypt(ciphertext, password, salt)
             assert isinstance(exception_info.value, S3EncryptError)
-
-
-def test_generate_salt():
-    with mock.patch("s3encrypt.s3encrypt.os") as mock_os:
-        generate_salt()
-        mock_os.urandom.assert_called_once_with(16)
