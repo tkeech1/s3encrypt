@@ -1,6 +1,8 @@
 s3encrypt
 -----------
 
+[![Known Vulnerabilities](https://snyk.io/test/github/tkeech1/s3encrypt/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/tkeech1/s3encrypt?targetFile=requirements.txt)
+
 A python program to compress and encrypt the contents of a directory and store in S3.
 
 Features
@@ -21,3 +23,4 @@ TODO
 * Unit tests
 * e2e tests
 * Docs 
+* Github actions
