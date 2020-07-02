@@ -56,10 +56,7 @@ def compress_encrypt_store(
             + f"{encrypted_file_path}"
         )
         encrypt_file(
-            compressed_file_path,
-            encrypted_file_path,
-            key,
-            bytes(salt, "utf-8"),
+            compressed_file_path, encrypted_file_path, key, bytes(salt, "utf-8"),
         )
         logger.info(
             f"Finished creating encrypted file for {directory} at {encrypted_file_path}"
@@ -69,29 +66,10 @@ def compress_encrypt_store(
             f"Starting S3 upload of compressed/encrypted {directory} to {s3_bucket}"
         )
         s3_url = store_to_s3(
-            encrypted_file_path,
-            s3_bucket,
-            f"{os.path.basename(directory)}.zip.enc",
+            encrypted_file_path, s3_bucket, f"{os.path.basename(directory)}.zip.enc",
         )
         logger.info(
             f"Finished S3 upload of compressed/encrypted {directory} to {s3_bucket}"
-        )
-
-        # verify the file
-        session = boto3.session.Session()
-        s3_client = session.client("s3")
-        s3_client.download_file(
-            s3_bucket,
-            f"{os.path.basename(directory)}.zip.enc",
-            f"testfiles/s3_downloads/{os.path.basename(directory)}.zip.enc",
-        )
-        ciphertext = read_file_content(
-            f"testfiles/s3_downloads/{os.path.basename(directory)}.zip.enc",
-        )
-        plaintext = decrypt(ciphertext, key, bytes(salt, "utf-8"))
-        write_file(
-            plaintext,
-            f"testfiles/s3_downloads/{os.path.basename(directory)}.zip",
         )
 
         return {directory: s3_url}
@@ -102,9 +80,7 @@ def compress_encrypt_store(
     finally:
         # remove the tmpfile
         os.remove(compressed_file_path)
-        logger.debug(
-            f"Removed tmp file for compressed archive: {compressed_file_path}"
-        )
+        logger.debug(f"Removed tmp file for compressed archive: {compressed_file_path}")
         os.remove(encrypted_file_path)
         logger.debug(
             f"Removed tmp file for encrypted compressed archive: {encrypted_file_path}"
@@ -137,9 +113,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
                     zipfile_handle.write(
                         os.path.join(root, file), file,
                     )
-                    logger.info(
-                        f"Finished creating compressed archive for {directory}"
-                    )
+                    logger.info(f"Finished creating compressed archive for {directory}")
 
     except Exception as e:
         logger.error(e)
@@ -149,9 +123,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
-def encrypt_file(
-    file_path: str, encrypted_file_path: str, key: str, salt: bytes
-):
+def encrypt_file(file_path: str, encrypted_file_path: str, key: str, salt: bytes):
     try:
         plaintext = read_file_content(file_path)
         ciphertext = encrypt(plaintext, key, salt)
@@ -247,9 +219,7 @@ def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str):
         session = boto3.session.Session()
         s3_client = session.client("s3")
         try:
-            response = s3_client.upload_file(
-                file_path, s3_bucket, s3_object_key
-            )
+            response = s3_client.upload_file(file_path, s3_bucket, s3_object_key)
             if response is None:
                 return f"https://s3.amazonaws.com/{s3_bucket}/{s3_object_key}"
         except boto3.ClientError as e:
@@ -316,9 +286,7 @@ async def s3encrypt_async(
                 )
             )
 
-        completed, pending = await asyncio.wait(
-            blocking_tasks, timeout=timeout
-        )
+        completed, pending = await asyncio.wait(blocking_tasks, timeout=timeout)
         results = [t.result() for t in completed]
         for r in results:
             for k, v in r.items():

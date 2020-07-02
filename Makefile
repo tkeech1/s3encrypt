@@ -45,6 +45,9 @@ test:
 	coverage report -m 
 	coverage html
 
+test-e2e:	
+	python e2e.py
+
 format:
 	black --line-length=79 s3encrypt
 

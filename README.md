@@ -24,6 +24,4 @@ TODO
 * Logging to file
 * Integration with KMS
 * Unit tests
-* e2e tests
-* Docs 
-* Github actions
+* Docs
