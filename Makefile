@@ -41,7 +41,7 @@ debug-test:
 	# --numprocesses=auto
 	
 test:	
-	coverage run --source s3encrypt --omit test_*.py -m pytest
+	coverage run --source s3encrypt --omit test_*.py e2e.py -m pytest
 	coverage report -m 
 	coverage html
 
