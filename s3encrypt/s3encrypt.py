@@ -294,9 +294,7 @@ async def s3encrypt_async(
 
     except Exception as e:
         logger.error(e)
-        logger.error(
-            f"Args: directories={directories}, key={key}, s3_bucket={s3_bucket}"
-        )
+        logger.error(f"Args: directories={directories}, s3_bucket={s3_bucket}")
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
     return final_dict

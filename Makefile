@@ -7,18 +7,10 @@ AWS_REGION?=AWS_REGION
 
 # run as a module
 run-module: format lint test	
-	#python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt \xd8\xfeM\x99\xe8]\xd3-RR\x8a\x10C\x8a%\xa4 --force 
 	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
 
 run-module-watch: format lint test	
 	python -m s3encrypt --log-level DEBUG --mode watch --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
-
-run-entry-point: uninstall-wheel clean build-wheel install-wheel
-	.venv/bin/s3encrypt-retriever --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --force 
-
-# run as a script
-run-script:	
-	python runner.py
 
 run-profile:	
 	python -m cProfile -s time -o profile.cprof runner.py
@@ -41,10 +33,11 @@ debug-test:
 	# --numprocesses=auto
 	
 test:	
-	coverage run --source s3encrypt --omit test_*.py e2e.py -m pytest
+	coverage run --source s3encrypt --omit */test*,e2e.py -m pytest
 	coverage report -m 
 	coverage html
 
+# run as a script
 test-e2e:	
 	python e2e.py
 
@@ -113,9 +106,6 @@ deps-prd:
 build-wheel: clean
 	python setup.py bdist_wheel
 
-build-sdist: clean
-	python setup.py sdist
-
 install-wheel:
 	pip install dist/s3encrypt-version_0.0.1_-py3-none-any.whl
 
@@ -126,7 +116,13 @@ run-wheel: # must be done after installing the wheel
 	# run directly from the wheel file
 	# python dist/s3encrypt-version_0.0.1_-py3-none-any.whl/s3encrypt
 	# or use the module
-	cd ~ && python -m s3encrypt
+	cd ~ && python -m s3encrypt --log-level INFO --directories /workspaces/s3encrypt/testfiles/testzip /workspaces/s3encrypt/testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
+
+run-entry-point: 
+	.venv/bin/s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
+
+build-sdist: clean
+	python setup.py sdist
 
 distribute:
 	#python setup.py register s3encrypt
@@ -139,4 +135,4 @@ install-setup:
 
 uninstall-setup:
 	rm .venv/lib/python3.8/site-packages/s3encrypt-version_0.0.1_-py3.8.egg || true
-	rm .venv/bin/s3encrypt-retriever || true
+	rm .venv/bin/s3encrypt || true
