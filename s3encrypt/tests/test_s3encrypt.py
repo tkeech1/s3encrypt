@@ -7,6 +7,7 @@ from s3encrypt.s3encrypt import (
     encrypt,
     decrypt,
     validate_directory,
+    compress_directory,
 )
 
 # from unittest.mock import patch
@@ -82,3 +83,31 @@ def test_encrypt():
         with pytest.raises(Exception) as exception_info:
             ciphertext = decrypt(ciphertext, password, salt)
             assert isinstance(exception_info.value, S3EncryptError)
+
+
+@mock.patch("s3encrypt.s3encrypt.os.walk")
+@mock.patch("s3encrypt.s3encrypt.zipfile.ZipFile")
+def test_compress_directory(mock_zipfile, mock_os_walk):
+    archive = mock.Mock()
+    mocked_write = mock.Mock()
+    archive.return_value.write = mocked_write
+    mock_zipfile.return_value.__enter__ = archive
+    mock_os_walk.return_value = ("/dirpath", ["dir1", "dir2"], ["file1", "file2"])
+    mock_os_walk.return_value = [
+        ("/dirpath", ("dir1",), ("file3",)),
+        ("/dirpath/dir1", (), ("file1", "file2")),
+    ]
+
+    compress_directory("", "")
+
+    calls = [
+        mock.call("/dirpath/dir1/file2", "file2"),
+        mock.call("/dirpath/dir1/file1", "file1"),
+        mock.call("/dirpath/file3", "file3"),
+    ]
+    mocked_write.assert_has_calls(calls, any_order=True)
+
+    mocked_write.side_effect = Exception("exception")
+    with pytest.raises(Exception) as exception_info:
+        compress_directory("", "")
+        assert isinstance(exception_info.value, S3EncryptError)

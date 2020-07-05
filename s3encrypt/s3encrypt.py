@@ -110,6 +110,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
         ) as zipfile_handle:
             for root, dirs, files in os.walk(directory):
                 for file in files:
+                    print(f"{file}\n")
                     zipfile_handle.write(
                         os.path.join(root, file), file,
                     )
