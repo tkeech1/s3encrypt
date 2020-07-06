@@ -7,6 +7,9 @@ import zipfile
 import tempfile
 import base64
 import boto3
+import hashlib
+import random, struct
+from Crypto.Cipher import AES
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf import pbkdf2
 from cryptography.hazmat.backends import default_backend
@@ -55,9 +58,12 @@ def compress_encrypt_store(
             f"Starting to create encrypted file for {directory} at "
             + f"{encrypted_file_path}"
         )
-        encrypt_file(
-            compressed_file_path, encrypted_file_path, key, bytes(salt, "utf-8"),
-        )
+        # encrypt_file(
+        #    compressed_file_path, encrypted_file_path, key, bytes(salt, "utf-8"),
+        # )
+
+        key_bytes = hashlib.sha256(bytes(key + salt, "utf-8")).digest()
+        encrypt_file(key_bytes, compressed_file_path, encrypted_file_path)
         logger.info(
             f"Finished creating encrypted file for {directory} at {encrypted_file_path}"
         )
@@ -71,7 +77,6 @@ def compress_encrypt_store(
         logger.info(
             f"Finished S3 upload of compressed/encrypted {directory} to {s3_bucket}"
         )
-
         return {directory: s3_url}
     except Exception as e:
         logger.error(e)
@@ -110,10 +115,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
         ) as zipfile_handle:
             for root, dirs, files in os.walk(directory):
                 for file in files:
-                    print(f"{file}\n")
-                    zipfile_handle.write(
-                        os.path.join(root, file), file,
-                    )
+                    zipfile_handle.write(os.path.join(root, file))
                     logger.info(f"Finished creating compressed archive for {directory}")
 
     except Exception as e:
@@ -124,7 +126,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
-def encrypt_file(file_path: str, encrypted_file_path: str, key: str, salt: bytes):
+"""def encrypt_file(file_path: str, encrypted_file_path: str, key: str, salt: bytes):
     try:
         plaintext = read_file_content(file_path)
         ciphertext = encrypt(plaintext, key, salt)
@@ -137,54 +139,64 @@ def encrypt_file(file_path: str, encrypted_file_path: str, key: str, salt: bytes
             + f"encrypted_file_path={encrypted_file_path}"
         )
         raise S3EncryptError(" s3encrypt encountered an error ", e)
+"""
 
 
-def derive_encryption_key(
-    password: str, salt: bytes = None
-) -> typing.Tuple[bytes, bytes]:
+def encrypt_file(
+    key: bytes, file_path: str, encrypted_file_path: str, chunksize: int = 64 * 1024,
+):
+    """ Encrypts a file using AES (CBC mode) with the
+        given key.
+
+        key:
+            The encryption key - a string that must be
+            either 16, 24 or 32 bytes long. Longer keys
+            are more secure.
+
+        in_filename:
+            Name of the input file
+
+        out_filename:
+            If None, '<in_filename>.enc' will be used.
+
+        chunksize:
+            Sets the size of the chunk which the function
+            uses to read and encrypt the file. Larger chunk
+            sizes can be faster for some files and machines.
+            chunksize must be divisible by 16.
+    """
     try:
-        salt = os.urandom(16) if salt is None else salt
 
-        kdf = pbkdf2.PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=100000,
-            backend=default_backend(),
+        iv = os.urandom(32)
+        encryptor = AES.new(key, AES.MODE_CBC, iv)
+        filesize = os.path.getsize(file_path)
+
+        logger.debug(f"Chunk size is {chunksize}")
+
+        with open(file_path, "rb") as infile:
+            with open(encrypted_file_path, "wb") as outfile:
+                outfile.write(struct.pack("<Q", filesize))
+                outfile.write(iv)
+
+                while True:
+                    chunk = infile.read(chunksize)
+                    if len(chunk) == 0:
+                        break
+                    elif len(chunk) % 16 != 0:
+                        chunk += bytes(" ", "utf-8") * (16 - len(chunk) % 16)
+
+                    outfile.write(encryptor.encrypt(chunk))
+
+    except Exception as e:
+        logger.error(e)
+        logger.error(
+            f"Args: file_path={file_path}, "
+            + f"encrypted_file_path={encrypted_file_path}"
         )
-        return (
-            base64.urlsafe_b64encode(kdf.derive(bytes(password, "utf-8"))),
-            salt,
-        )
-    except Exception as e:
-        logger.error(e)
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
-def read_file_content(file_path: str) -> bytes:
-    try:
-        file_content = b""
-        with open(file_path, "rb") as fo:
-            file_content = fo.read()
-
-        return file_content
-    except Exception as e:
-        logger.error(e)
-        logger.error(f"Args: file_path={file_path}")
-        raise S3EncryptError(" s3encrypt encountered an error ", e)
-
-
-def write_file(content: bytes, file_path: str):
-    try:
-        with open(file_path, "wb") as fo:
-            fo.write(content)
-
-    except Exception as e:
-        logger.error(e)
-        logger.error(f"Args: file_path={file_path}")
-        raise S3EncryptError(" s3encrypt encountered an error ", e)
-
-
+"""
 def encrypt(plaintext: bytes, password: str, salt: bytes) -> bytes:
     try:
         encryption_key, _ = derive_encryption_key(password, salt)
@@ -207,6 +219,39 @@ def decrypt(ciphertext: bytes, password: str, salt: bytes) -> bytes:
         return decrypted_bytes
     except Exception as e:
         logger.error(e)
+        raise S3EncryptError(" s3encrypt encountered an error ", e)
+"""
+
+
+def decrypt_file(
+    key: bytes, file_path: str, decrypted_file_path: str, chunksize=24 * 1024
+):
+    """ Decrypts a file using AES (CBC mode) with the
+        given key. Parameters are similar to encrypt_file,
+        with one difference: decrypted_file_path, if not supplied
+        will be in_filename without its last extension
+        (i.e. if in_filename is 'aaa.zip.enc' then
+        decrypted_file_path will be 'aaa.zip')
+    """
+    try:
+        with open(file_path, "rb") as infile:
+            origsize = struct.unpack("<Q", infile.read(struct.calcsize("Q")))[0]
+            iv = infile.read(16)
+            decryptor = AES.new(key, AES.MODE_CBC, iv)
+
+            with open(decrypted_file_path, "wb") as outfile:
+                while True:
+                    chunk = infile.read(chunksize)
+                    if len(chunk) == 0:
+                        break
+                    outfile.write(decryptor.decrypt(chunk))
+
+                outfile.truncate(origsize)
+    except Exception as e:
+        logger.error(e)
+        logger.error(
+            f"Args: file_path={file_path}, decrypted_file_path={decrypted_file_path}, chunk_size={chunksize}"
+        )
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 

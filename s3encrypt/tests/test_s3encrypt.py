@@ -1,11 +1,6 @@
 """ Tests for s3encrypt """
 from s3encrypt.s3encrypt import (
-    derive_encryption_key,
-    read_file_content,
     S3EncryptError,
-    write_file,
-    encrypt,
-    decrypt,
     validate_directory,
     compress_directory,
 )
@@ -27,7 +22,14 @@ def test_validate_directory():
             assert isinstance(exception_info.value, S3EncryptError)
 
 
-def test_derive_encryption_key():
+"""
+@mock.patch("s3encrypt.s3encrypt.os.walk")
+@mock.patch("s3encrypt.s3encrypt.zipfile.ZipFile")
+def test_compress_directory(mock_zipfile, mock_os_walk):
+def test_encrypt_file():
+"""
+
+"""def test_derive_encryption_key():
     encryption_key, salt = derive_encryption_key("12345", b"12345678912345")
     assert b"pPn6MD9woGq6yuE7Q2pO2kVaBHpDMG8tUtC8NZSQdW8=" == encryption_key
 
@@ -36,8 +38,8 @@ def test_derive_encryption_key():
         with pytest.raises(Exception) as exception_info:
             derive_encryption_key("12345")
             assert isinstance(exception_info.value, S3EncryptError)
-
-
+"""
+"""
 def test_get_file_content():
     mock_open = mock.mock_open(read_data="data data data")
     with mock.patch("builtins.open", mock_open):
@@ -49,8 +51,8 @@ def test_get_file_content():
         with pytest.raises(Exception) as exception_info:
             result = read_file_content("filename")
             assert isinstance(exception_info.value, S3EncryptError)
-
-
+"""
+"""
 def test_write_file():
     mock_open = mock.mock_open(read_data="data data data")
     with mock.patch("builtins.open", mock_open) as m:
@@ -64,8 +66,8 @@ def test_write_file():
         with pytest.raises(Exception) as exception_info:
             write_file(b"some file content", "some_file_path")
             assert isinstance(exception_info.value, S3EncryptError)
-
-
+"""
+"""
 def test_encrypt():
     content = b"12345"
     password = "password"
@@ -83,6 +85,7 @@ def test_encrypt():
         with pytest.raises(Exception) as exception_info:
             ciphertext = decrypt(ciphertext, password, salt)
             assert isinstance(exception_info.value, S3EncryptError)
+"""
 
 
 @mock.patch("s3encrypt.s3encrypt.os.walk")
@@ -101,9 +104,9 @@ def test_compress_directory(mock_zipfile, mock_os_walk):
     compress_directory("", "")
 
     calls = [
-        mock.call("/dirpath/dir1/file2", "file2"),
-        mock.call("/dirpath/dir1/file1", "file1"),
-        mock.call("/dirpath/file3", "file3"),
+        mock.call("/dirpath/dir1/file2"),
+        mock.call("/dirpath/dir1/file1"),
+        mock.call("/dirpath/file3"),
     ]
     mocked_write.assert_has_calls(calls, any_order=True)
 

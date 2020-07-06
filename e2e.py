@@ -4,12 +4,11 @@ import os
 import zipfile
 import shutil
 import logging
+import hashlib
 from s3encrypt.s3encrypt import (
     compress_encrypt_store,
-    write_file,
     compress_directory,
-    read_file_content,
-    decrypt,
+    decrypt_file,
 )
 
 logger = logging.getLogger(__package__)
@@ -26,8 +25,15 @@ logger.addHandler(ch)
 def e2e():
 
     tmp_dir_path = tempfile.mkdtemp()
+    tmp_subdir_path = tempfile.mkdtemp(dir=tmp_dir_path)
+    _, tmp_file_path = tempfile.mkstemp(dir=tmp_subdir_path)
+
+    # test directory structure
+    # - DIR
+    #   - SUBDIR
+    #     - TMPFILE
+
     tmp_extract_dir_path = tempfile.mkdtemp()
-    _, tmp_file_path = tempfile.mkstemp(dir=tmp_dir_path)
     _, tmp_encrypted_file = tempfile.mkstemp()
     _, tmp_unencrypted_file = tempfile.mkstemp()
 
@@ -35,6 +41,9 @@ def e2e():
     salt = "mysalt"
     bucket = "tdk-bd-keep.io"
     test_file_content = b"test content"
+
+    session = boto3.session.Session()
+    s3_client = session.client("s3")
 
     try:
 
@@ -45,16 +54,13 @@ def e2e():
         logger.info(f"Compressed, encrypted and uploaded to {bucket}")
 
         # verify the file
-        session = boto3.session.Session()
-        s3_client = session.client("s3")
         s3_client.download_file(
             bucket, f"{os.path.basename(tmp_dir_path)}.zip.enc", tmp_encrypted_file
         )
         logger.info(f"Downloaded encrypted file from {bucket}")
 
-        ciphertext = read_file_content(tmp_encrypted_file)
-        plaintext = decrypt(ciphertext, key, bytes(salt, "utf-8"))
-        write_file(plaintext, tmp_unencrypted_file)
+        key_bytes = hashlib.sha256(bytes(key + salt, "utf-8")).digest()
+        decrypt_file(key_bytes, tmp_encrypted_file, tmp_unencrypted_file)
 
         with zipfile.ZipFile(tmp_unencrypted_file, "r") as zip_ref:
             zip_ref.extractall(tmp_extract_dir_path)
@@ -62,7 +68,7 @@ def e2e():
         logger.info(f"Decrypted and unzipped file")
 
         assert test_file_content == read_file_content(
-            f"{tmp_extract_dir_path}{os.sep}{os.path.basename(tmp_file_path)}"
+            f"{tmp_extract_dir_path}{os.sep}{tmp_subdir_path}{os.sep}{os.path.basename(tmp_file_path)}"
         )
         logger.info(f"Original contents match")
 
@@ -79,6 +85,19 @@ def e2e():
         s3_client.delete_object(
             Bucket=bucket, Key=f"{os.path.basename(tmp_dir_path)}.zip.enc"
         )
+
+
+def write_file(content: bytes, file_path: str):
+    with open(file_path, "wb") as fo:
+        fo.write(content)
+
+
+def read_file_content(file_path: str) -> bytes:
+    file_content = b""
+    with open(file_path, "rb") as fo:
+        file_content = fo.read()
+
+    return file_content
 
 
 if __name__ == "__main__":
