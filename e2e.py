@@ -8,8 +8,8 @@ import hashlib
 from s3encrypt.s3encrypt import (
     compress_encrypt_store,
     compress_directory,
-    decrypt_file,
 )
+from s3encrypt.aws_encryption_provider import decrypt_file
 
 logger = logging.getLogger(__package__)
 logger.setLevel(logging.INFO)

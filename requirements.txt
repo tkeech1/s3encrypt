@@ -1,5 +1,7 @@
 -i https://pypi.org/simple
 argparse==1.4.0
+attrs==19.3.0
+aws-encryption-sdk==1.4.1
 boto3==1.14.17
 botocore==1.17.17
 cffi==1.14.0
@@ -9,10 +11,10 @@ git+https://github.com/Tinche/cattrs.git@574c412a7da1618f52179ddbf682b1b7fdf95dd
 jmespath==0.10.0
 pathtools==0.1.2
 pycparser==2.20
-pycrypto==2.6.1
 python-dateutil==2.8.1
 s3transfer==0.3.3
 six==1.15.0
 typing-extensions==3.7.4.2
 urllib3==1.25.9 ; python_version != '3.4'
 watchdog==0.10.3
+wrapt==1.12.1

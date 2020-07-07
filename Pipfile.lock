@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1f127479ac017dd19751c37a3211f6cf6e926983007015b6c784e50f1fc436ff"
+            "sha256": "4799f7283ee7b9ee184c65bd5476c194143e811db9de4070530daa10c59ce20b"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -21,6 +21,21 @@
             ],
             "index": "pypi",
             "version": "==1.4.0"
+        },
+        "attrs": {
+            "hashes": [
+                "sha256:08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c",
+                "sha256:f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"
+            ],
+            "version": "==19.3.0"
+        },
+        "aws-encryption-sdk": {
+            "hashes": [
+                "sha256:4f8ea7073e943d1ac82adf9bccfccdd9f817d23e3d49c782862b1814efd1155e",
+                "sha256:cd5943adbab9193907401a57542fbf8b412670a2cd115b48cdd5825592f6c223"
+            ],
+            "index": "pypi",
+            "version": "==1.4.1"
         },
         "boto3": {
             "hashes": [
@@ -96,7 +111,6 @@
                 "sha256:e993468c859d084d5579e2ebee101de8f5a27ce8e2159959b6673b418fd8c785",
                 "sha256:f118a95c7480f5be0df8afeb9a11bd199aa20afab7a96bcf20409b411a3a85f0"
             ],
-            "index": "pypi",
             "version": "==2.9.2"
         },
         "docutils": {
@@ -126,13 +140,6 @@
                 "sha256:7582ad22678f0fcd81102833f60ef8d0e57288b6b5fb00323d101be910e35705"
             ],
             "version": "==2.20"
-        },
-        "pycrypto": {
-            "hashes": [
-                "sha256:f2ce1e989b272cfcb677616763e0a2e7ec659effa67a88aa92b3a65528f60a3c"
-            ],
-            "index": "pypi",
-            "version": "==2.6.1"
         },
         "python-dateutil": {
             "hashes": [
@@ -178,6 +185,12 @@
             ],
             "index": "pypi",
             "version": "==0.10.3"
+        },
+        "wrapt": {
+            "hashes": [
+                "sha256:b62ffa81fb85f4332a4f609cab4ac40709470da05643a082ec1eb88e6d9b97d7"
+            ],
+            "version": "==1.12.1"
         }
     },
     "develop": {

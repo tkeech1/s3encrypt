@@ -95,7 +95,11 @@ def test_compress_directory(mock_zipfile, mock_os_walk):
     mocked_write = mock.Mock()
     archive.return_value.write = mocked_write
     mock_zipfile.return_value.__enter__ = archive
-    mock_os_walk.return_value = ("/dirpath", ["dir1", "dir2"], ["file1", "file2"])
+    mock_os_walk.return_value = (
+        "/dirpath",
+        ["dir1", "dir2"],
+        ["file1", "file2"],
+    )
     mock_os_walk.return_value = [
         ("/dirpath", ("dir1",), ("file3",)),
         ("/dirpath/dir1", (), ("file1", "file2")),
