@@ -24,6 +24,7 @@ memory-profiler = "*"
 argparse = "*"
 boto3 = ">=1.12.8"
 pycrypto = ">=2.6.1"
+cryptography = ">=2.9.2"
 watchdog = ">=0.10.3"
 typing-extensions = "*"
 # pipenv install typing_extensions git+https://github.com/Tinche/cattrs.git@v1.0.0#egg=cattrs
