@@ -14,26 +14,18 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
     """Randomly and consistently generates 256-bit keys for each
     unique key ID."""
 
-    provider_id = "static-random"
+    provider_id = "static"
 
     def __init__(self, **kwargs):
         self._static_keys = {}
 
     def _get_raw_key(self, key_id):
-        """Returns a static, randomly-generated symmetric key
-        for the specified key ID.
-
-        :param str key_id: Key ID
-        :returns: Wrapping key that contains the specified static key
-        :rtype: :class:`aws_encryption_sdk.internal.crypto.WrappingKey`
-        """
         try:
             static_key = self._static_keys[key_id]
         except KeyError:
-            # static_key = os.urandom(32)
-            # TODO - fix
             static_key = hashlib.sha256(key_id).digest()
             self._static_keys[key_id] = static_key
+
         return WrappingKey(
             wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             wrapping_key=static_key,
@@ -42,19 +34,14 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
 
 
 def get_master_key_provider(key_id: bytes) -> RawMasterKeyProvider:
-    try:
-        master_key_provider = StaticRandomMasterKeyProvider()
-        master_key_provider.add_master_key(key_id)
-        return master_key_provider
-    except Exception as e:
-        logger.error(e)
-        raise EncrypterError(" s3encrypt.encrypter encountered an error ", e)
+    master_key_provider = StaticRandomMasterKeyProvider()
+    master_key_provider.add_master_key(key_id)
+    return master_key_provider
 
 
-def encrypt_file(key: bytes, file_path: str, encrypted_file_path: str,) -> None:
+def encrypt_file(key: bytes, file_path: str, encrypted_file_path: str) -> None:
     try:
         master_key_provider = get_master_key_provider(key)
-        # Encrypt the plaintext source data.
         with open(file_path, "rb") as plaintext, open(
             encrypted_file_path, "wb"
         ) as ciphertext:
@@ -79,7 +66,6 @@ def encrypt_file(key: bytes, file_path: str, encrypted_file_path: str,) -> None:
 def decrypt_file(key: bytes, file_path: str, decrypted_file_path: str,) -> None:
     try:
         master_key_provider = get_master_key_provider(key)
-        # Decrypt the ciphertext.
         with open(file_path, "rb") as ciphertext, open(
             decrypted_file_path, "wb"
         ) as plaintext:

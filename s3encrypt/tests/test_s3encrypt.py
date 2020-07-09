@@ -5,9 +5,9 @@ from s3encrypt.s3encrypt import (
     compress_directory,
 )
 
-# from unittest.mock import patch
 from unittest import mock
 import pytest
+import hashlib
 
 
 def test_validate_directory():
@@ -21,13 +21,6 @@ def test_validate_directory():
             validate_directory("-somedir-somedir2-")
             assert isinstance(exception_info.value, S3EncryptError)
 
-
-"""
-@mock.patch("s3encrypt.s3encrypt.os.walk")
-@mock.patch("s3encrypt.s3encrypt.zipfile.ZipFile")
-def test_compress_directory(mock_zipfile, mock_os_walk):
-def test_encrypt_file():
-"""
 
 """def test_derive_encryption_key():
     encryption_key, salt = derive_encryption_key("12345", b"12345678912345")
