@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def compress_encrypt_store(
-    directory: str, key: str, salt: str, s3_bucket: str, force: bool
+    directory: str, password: str, s3_bucket: str, force: bool
 ) -> typing.Dict[str, str]:
 
     try:
@@ -52,19 +52,13 @@ def compress_encrypt_store(
             f"Starting to create encrypted file for {directory} at "
             + f"{encrypted_file_path}"
         )
-        # encrypt_file(
-        #    compressed_file_path, encrypted_file_path, key, bytes(salt, "utf-8"),
-        # )
 
-        key_bytes = hashlib.sha256(bytes(key + salt, "utf-8")).digest()
-        # encrypt_file(key_bytes, compressed_file_path, encrypted_file_path)
-        # cycle_file(compressed_file_path)
+        key_bytes = hashlib.sha256(bytes(password, "utf-8")).digest()
         encrypt_file(key_bytes, compressed_file_path, encrypted_file_path)
         logger.info(
             f"Finished creating encrypted file for {directory} at {encrypted_file_path}"
         )
 
-        # s3_url = "TODO"
         logger.debug(
             f"Starting S3 upload of compressed/encrypted {directory} to {s3_bucket}"
         )
@@ -151,8 +145,7 @@ def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str):
 
 async def s3encrypt_async(
     directories: typing.List[str],
-    key: str,
-    salt: str,
+    password: str,
     s3_bucket: str,
     force: bool,
     timeout: int,
@@ -162,7 +155,7 @@ async def s3encrypt_async(
     Args:
             directories (List[str]): directories
 
-            key (str): the encryption key.
+            password (str): the password used to generate the encryption key.
 
             s3_bucket (str): the S3 bucket for upload
 
@@ -175,7 +168,7 @@ async def s3encrypt_async(
 
     """
 
-    if len(directories) == 0 or not key:
+    if len(directories) == 0 or not password:
         return {}
 
     final_dict: typing.Dict[str, str] = {}
@@ -193,8 +186,7 @@ async def s3encrypt_async(
                     executor,
                     compress_encrypt_store,
                     directory,
-                    key,
-                    salt,
+                    password,
                     s3_bucket,
                     force,
                 )

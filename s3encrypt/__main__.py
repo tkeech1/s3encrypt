@@ -4,7 +4,7 @@ This module zips, encrypts and saves the encrypted file to an S3 bucket.
 
 Example:
     $ python -m s3encrypt store --directories test test2 test3
-        --s3_bucket MYBUCKET --key 12345
+        --s3_bucket MYBUCKET --password 12345
 
 Attributes:
         __author__ = author of the module.
@@ -69,14 +69,11 @@ def get_args() -> argparse.Namespace:
         required=True,
     )
     parser.add_argument(
-        "--key",
+        "--password",
         type=str,
         action="store",
-        help="the encryption key",
+        help="the password used to generate the encryption key",
         required=True,
-    )
-    parser.add_argument(
-        "--salt", type=str, action="store", help="the salt", required=True,
     )
     parser.add_argument(
         "--force",
@@ -90,10 +87,7 @@ def get_args() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    logger.debug(
-        f"Args: directories={args.directories}, s3_bucket={args.s3_bucket}, "
-        + f"key={args.key}"
-    )
+    logger.debug(f"Args: directories={args.directories}, s3_bucket={args.s3_bucket}, ")
 
     return args
 
@@ -106,8 +100,7 @@ async def main_async(args: argparse.Namespace) -> typing.Any:
             asyncio.create_task(
                 s3encrypt_async(
                     directories=args.directories,
-                    key=args.key,
-                    salt=args.salt,
+                    password=args.password,
                     s3_bucket=args.s3_bucket,
                     force=args.force,
                     timeout=timeout,
@@ -152,16 +145,14 @@ def main():
         logger.debug("Starting in WATCH mode")
         process_limit = 5
         if len(args.directories) > process_limit:
-            logger.info(
-                f"Maximum number of watched directories is {process_limit}"
-            )
+            logger.info(f"Maximum number of watched directories is {process_limit}")
             return
 
         watcher = DirectoryWatcher()
         for directory in args.directories:
             logger.debug(f"Starting watch for {directory}")
             watcher.add_watched_directory(
-                directory, args.key, args.salt, args.s3_bucket, args.force
+                directory, args.password, args.salt, args.s3_bucket, args.force
             )
             logger.debug(f"Started watch for {directory}")
         watcher.run()

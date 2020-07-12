@@ -38,7 +38,6 @@ def e2e():
     _, tmp_unencrypted_file = tempfile.mkstemp()
 
     key = "12345"
-    salt = "mysalt"
     bucket = "tdk-bd-keep.io"
     test_file_content = b"test content"
 
@@ -50,7 +49,7 @@ def e2e():
         # compress, encrypt and store in S3
         write_file(test_file_content, tmp_file_path)
         logger.info(f"Created tmp file")
-        compress_encrypt_store(tmp_dir_path, key, salt, bucket, True)
+        compress_encrypt_store(tmp_dir_path, key, bucket, True)
         logger.info(f"Compressed, encrypted and uploaded to {bucket}")
 
         # verify the file
@@ -59,7 +58,7 @@ def e2e():
         )
         logger.info(f"Downloaded encrypted file from {bucket}")
 
-        key_bytes = hashlib.sha256(bytes(key + salt, "utf-8")).digest()
+        key_bytes = hashlib.sha256(bytes(key, "utf-8")).digest()
         decrypt_file(key_bytes, tmp_encrypted_file, tmp_unencrypted_file)
 
         with zipfile.ZipFile(tmp_unencrypted_file, "r") as zip_ref:
