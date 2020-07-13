@@ -19,3 +19,31 @@ def test_get_master_key_provider(mock_zipfile):
 def test_encrypt_file(mock_zipfile, mock_os_walk):
     pass
 
+
+"""
+def test_encrypt_file():
+    mock_open = mock.mock_open(read_data="data data data")
+    with mock.patch("builtins.open", mock_open) as m:
+        write_file(b"some file content", "some_file_path")
+        m.assert_called_once_with("some_file_path", "wb")
+        handle = m()
+        handle.write.assert_called_with(b"some file content")
+    mock_open.side_effect = Exception("exception")
+    with mock.patch("builtins.open", mock_open):
+        with pytest.raises(Exception) as exception_info:
+            write_file(b"some file content", "some_file_path")
+            assert isinstance(exception_info.value, S3EncryptError)
+
+
+def test_get_file_content():
+    mock_open = mock.mock_open(read_data="data data data")
+    with mock.patch("builtins.open", mock_open):
+        result = read_file_content("filename")
+    assert "data data data" == result
+    mock_open.side_effect = Exception("exception")
+    with mock.patch("builtins.open", mock_open):
+        with pytest.raises(Exception) as exception_info:
+            result = read_file_content("filename")
+            assert isinstance(exception_info.value, S3EncryptError)
+"""
+

@@ -7,6 +7,7 @@ import zipfile
 import tempfile
 import hashlib
 import boto3
+import botocore
 from s3encrypt.aws_encryption_provider import encrypt_file
 
 # from memory_profiler import profile
@@ -19,6 +20,7 @@ def compress_encrypt_store(
 ) -> typing.Dict[str, str]:
 
     try:
+        print(f"directory is")
         directory = validate_directory(directory)
     except S3EncryptError:
         logger.info(f"{directory} is not a valid directory. Skipping.")
@@ -74,13 +76,19 @@ def compress_encrypt_store(
         logger.error(f"Args: directory={directory}, s3_bucket={s3_bucket}")
         raise S3EncryptError(" s3encrypt encountered an error ", e)
     finally:
-        # remove the tmpfile
-        os.remove(compressed_file_path)
-        logger.debug(f"Removed tmp file for compressed archive: {compressed_file_path}")
-        os.remove(encrypted_file_path)
-        logger.debug(
-            f"Removed tmp file for encrypted compressed archive: {encrypted_file_path}"
-        )
+        try:
+            # remove the tmpfile
+            os.remove(compressed_file_path)
+            logger.debug(
+                f"Removed tmp file for compressed archive: {compressed_file_path}"
+            )
+            os.remove(encrypted_file_path)
+            logger.debug(
+                f"Removed tmp file for encrypted compressed archive: {encrypted_file_path}"
+            )
+        except Exception as e:
+            logger.debug(f"An exception occurred removing a tmp file: {e}")
+            raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
 def validate_directory(directory: str) -> str:
@@ -88,7 +96,7 @@ def validate_directory(directory: str) -> str:
     # in the directory name
     directory = (
         directory[: len(directory) - 1]
-        if directory.rindex(os.sep) == len(directory) - 1
+        if os.sep in directory and directory.rindex(os.sep) == len(directory) - 1
         else directory
     )
 
@@ -130,10 +138,10 @@ def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str):
             response = s3_client.upload_file(file_path, s3_bucket, s3_object_key)
             if response is None:
                 return f"https://s3.amazonaws.com/{s3_bucket}/{s3_object_key}"
-        except boto3.ClientError as e:
+        except botocore.exceptions.ClientError as e:
             logging.error(e)
+            raise e
 
-        raise Exception("An error occurred during S3 upload.")
     except Exception as e:
         logger.error(e)
         logger.error(
@@ -141,6 +149,14 @@ def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str):
             + ", s3_object_key={s3_object_key}"
         )
         raise S3EncryptError(" s3encrypt encountered an error ", e)
+
+    raise S3EncryptError(
+        " s3encrypt encountered an error ",
+        Exception(
+            f"Error: file path: {file_path}, bucket: {s3_bucket}, "
+            + "s3_object_key: {s3_object_key}; S3 response was {response}"
+        ),
+    )
 
 
 async def s3encrypt_async(
