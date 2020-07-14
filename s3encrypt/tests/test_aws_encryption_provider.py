@@ -1,4 +1,8 @@
-from s3encrypt.aws_encryption_provider import get_master_key_provider, EncrypterError
+from s3encrypt.aws_encryption_provider import (
+    get_master_key_provider,
+    EncrypterError,
+    encrypt_file,
+)
 from unittest import mock
 import pytest
 import hashlib
@@ -14,27 +18,29 @@ def test_get_master_key_provider(mock_zipfile):
     assert len(raw_key._wrapping_key) == 32
 
 
-@mock.patch("s3encrypt.s3encrypt.os.walk")
-@mock.patch("s3encrypt.s3encrypt.zipfile.ZipFile")
-def test_encrypt_file(mock_zipfile, mock_os_walk):
-    pass
-
-
-"""
-def test_encrypt_file():
-    mock_open = mock.mock_open(read_data="data data data")
+@mock.patch("s3encrypt.aws_encryption_provider.aws_encryption_sdk.stream")
+def test_encrypt_file(mock_stream):
+    mock_stream.return_value.__enter__.return_value = ["text to write"]
+    mock_open = mock.mock_open()
+    mock_write = mock.mock_open(read_data="Data2").return_value
+    mock_open.side_effect = [
+        mock.mock_open(read_data="Data1").return_value,
+        mock_write,
+    ]
     with mock.patch("builtins.open", mock_open) as m:
-        write_file(b"some file content", "some_file_path")
-        m.assert_called_once_with("some_file_path", "wb")
-        handle = m()
-        handle.write.assert_called_with(b"some file content")
+        encrypt_file(b"bytes", "somepath", "someotherpath")
+        calls = [mock.call("somepath", "rb"), mock.call("someotherpath", "wb")]
+        m.assert_has_calls(calls)
+        mock_write.write.assert_called_once_with("text to write")
+
     mock_open.side_effect = Exception("exception")
     with mock.patch("builtins.open", mock_open):
         with pytest.raises(Exception) as exception_info:
-            write_file(b"some file content", "some_file_path")
+            encrypt_file(b"bytes", "somepath", "someotherpath")
             assert isinstance(exception_info.value, S3EncryptError)
 
 
+"""
 def test_get_file_content():
     mock_open = mock.mock_open(read_data="data data data")
     with mock.patch("builtins.open", mock_open):

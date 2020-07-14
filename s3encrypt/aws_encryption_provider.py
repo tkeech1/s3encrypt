@@ -48,11 +48,9 @@ def encrypt_file(key: bytes, file_path: str, encrypted_file_path: str) -> None:
             with aws_encryption_sdk.stream(
                 mode="e", source=plaintext, key_provider=master_key_provider
             ) as encryptor:
-                i = 0
-                for chunk in encryptor:
+                for index, chunk in enumerate(encryptor):
                     ciphertext.write(chunk)
-                    logger.info(f"Wrote chunk {i}")
-                    i += 1
+                    logger.info(f"Wrote chunk {index}")
 
     except Exception as e:
         logger.error(e)

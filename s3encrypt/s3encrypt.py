@@ -20,7 +20,6 @@ def compress_encrypt_store(
 ) -> typing.Dict[str, str]:
 
     try:
-        print(f"directory is")
         directory = validate_directory(directory)
     except S3EncryptError:
         logger.info(f"{directory} is not a valid directory. Skipping.")
