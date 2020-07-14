@@ -37,7 +37,7 @@ def test_encrypt_file(mock_stream):
     with mock.patch("builtins.open", mock_open):
         with pytest.raises(Exception) as exception_info:
             encrypt_file(b"bytes", "somepath", "someotherpath")
-            assert isinstance(exception_info.value, S3EncryptError)
+            assert isinstance(exception_info.value, EncrypterError)
 
 
 """
