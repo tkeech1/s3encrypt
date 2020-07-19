@@ -83,7 +83,8 @@ def compress_encrypt_store(
             )
             os.remove(encrypted_file_path)
             logger.debug(
-                f"Removed tmp file for encrypted compressed archive: {encrypted_file_path}"
+                "Removed tmp file for encrypted compressed archive: ",
+                f"{encrypted_file_path}",
             )
         except Exception as e:
             logger.debug(f"An exception occurred removing a tmp file: {e}")
@@ -124,7 +125,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
-def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str):
+def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str) -> str:
     try:
         # TODO - check for existence of the file before overwriting
         # or make the file-name unique

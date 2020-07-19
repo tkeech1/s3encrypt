@@ -113,7 +113,7 @@ async def main_async(args: argparse.Namespace) -> typing.Any:
         logger.error(e)
 
 
-def main():
+def main() -> None:
 
     args = get_args()
 
@@ -152,7 +152,7 @@ def main():
         for directory in args.directories:
             logger.debug(f"Starting watch for {directory}")
             watcher.add_watched_directory(
-                directory, args.password, args.salt, args.s3_bucket, args.force
+                directory, args.password, args.s3_bucket, args.force
             )
             logger.debug(f"Started watch for {directory}")
         watcher.run()

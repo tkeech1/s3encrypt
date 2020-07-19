@@ -11,7 +11,6 @@ from s3encrypt.s3encrypt import (
 from unittest import mock
 import pytest
 import hashlib
-import boto3
 import botocore
 
 
@@ -105,18 +104,18 @@ def test_compress_encrypt_store(
     mock_validate_directory.assert_called_once_with(directory)
     mock_compress_directory.assert_called_once_with(directory, "some_file")
     mock_encrypt_file.assert_called_once_with(
-        hashlib.sha256(bytes(password, "utf-8")).digest(), "some_file", "some_file"
+        hashlib.sha256(bytes(password, "utf-8")).digest(), "some_file", "some_file",
     )
     mock_store_to_s3.assert_called_once_with("some_file", s3bucket, "dir.zip.enc")
 
     # error removing tmp file
     mock_os_remove.side_effect = Exception("exception")
-    with pytest.raises(S3EncryptError) as exception_info:
+    with pytest.raises(S3EncryptError):
         compress_encrypt_store(directory, password, s3bucket, force)
 
     # error in encryption/upload
     mock_compress_directory.side_effect = Exception("exception")
-    with pytest.raises(S3EncryptError) as exception_info:
+    with pytest.raises(S3EncryptError):
         compress_encrypt_store(directory, password, s3bucket, force)
 
     # invalid directory
@@ -149,14 +148,16 @@ async def test_s3encrypt_async(mock_compress_encrypt_store):
 
     password = "pass"
     # return a different value for each call to the mock
-    mock_compress_encrypt_store.side_effect = [{"file1": "url1"}, {"file2": "url2"}]
+    mock_compress_encrypt_store.side_effect = [
+        {"file1": "url1"},
+        {"file2": "url2"},
+    ]
     result = await (s3encrypt_async(directories, password, s3_bucket, force, timeout))
     assert len(result) == 2
     assert result["file1"] == "url1"
     assert result["file2"] == "url2"
 
     # error in s3encrypt_async
-    with pytest.raises(S3EncryptError) as exception_info:
+    with pytest.raises(S3EncryptError):
         mock_compress_encrypt_store.side_effect = Exception("exception")
         await s3encrypt_async(directories, password, s3_bucket, force, timeout)
-

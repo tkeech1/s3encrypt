@@ -5,10 +5,7 @@ import zipfile
 import shutil
 import logging
 import hashlib
-from s3encrypt.s3encrypt import (
-    compress_encrypt_store,
-    compress_directory,
-)
+from s3encrypt.s3encrypt import compress_encrypt_store
 from s3encrypt.aws_encryption_provider import decrypt_file
 
 logger = logging.getLogger(__package__)
@@ -67,7 +64,8 @@ def e2e():
         logger.info(f"Decrypted and unzipped file")
 
         assert test_file_content == read_file_content(
-            f"{tmp_extract_dir_path}{os.sep}{tmp_subdir_path}{os.sep}{os.path.basename(tmp_file_path)}"
+            f"{tmp_extract_dir_path}{os.sep}{tmp_subdir_path}{os.sep}"
+            f"{os.path.basename(tmp_file_path)}"
         )
         logger.info(f"Original contents match")
 

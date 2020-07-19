@@ -32,7 +32,7 @@ debug-test:
 	# using more processes makes it slower for a small number of tests
 	# --numprocesses=auto
 	
-test:	
+test: lint
 	coverage run --source s3encrypt --omit */test*,e2e.py -m pytest
 	coverage report -m 
 	coverage html
@@ -42,12 +42,11 @@ test-e2e:
 	python e2e.py
 
 format:
-	black --line-length=79 s3encrypt
+	black s3encrypt 
 
-lint:	
+lint: format
 	flake8 s3encrypt
 	mypy s3encrypt
-	pycodestyle s3encrypt
 
 tox:
 	tox

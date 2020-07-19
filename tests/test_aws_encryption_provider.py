@@ -4,8 +4,7 @@ from s3encrypt.aws_encryption_provider import (
     encrypt_file,
 )
 from unittest import mock
-import pytest
-import hashlib
+import pytest  # type: ignore
 from aws_encryption_sdk.internal.crypto import WrappingKey
 
 
@@ -41,29 +40,6 @@ def test_encrypt_file(mock_stream):
 
 
 """
-@mock.patch("s3encrypt.aws_encryption_provider.aws_encryption_sdk.stream")
-def test_encrypt_file(mock_stream):
-    mock_stream.return_value.__enter__.return_value = ["text to write"]
-    mock_open = mock.mock_open()
-    mock_write = mock.mock_open(read_data="Data2").return_value
-    mock_open.side_effect = [
-        mock.mock_open(read_data="Data1").return_value,
-        mock_write,
-    ]
-    with mock.patch("builtins.open", mock_open) as m:
-        encrypt_file(b"bytes", "somepath", "someotherpath")
-        calls = [mock.call("somepath", "rb"), mock.call("someotherpath", "wb")]
-        m.assert_has_calls(calls)
-        mock_write.write.assert_called_once_with("text to write")
-
-    mock_open.side_effect = Exception("exception")
-    with mock.patch("builtins.open", mock_open):
-        with pytest.raises(Exception) as exception_info:
-            encrypt_file(b"bytes", "somepath", "someotherpath")
-            assert isinstance(exception_info.value, EncrypterError)
-"""
-
-"""
 def test_get_file_content():
     mock_open = mock.mock_open(read_data="data data data")
     with mock.patch("builtins.open", mock_open):
@@ -75,4 +51,3 @@ def test_get_file_content():
             result = read_file_content("filename")
             assert isinstance(exception_info.value, S3EncryptError)
 """
-
