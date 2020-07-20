@@ -191,25 +191,25 @@ async def s3encrypt_async(
 
     try:
 
-        executor = ThreadPoolExecutor(max_workers=5)
         loop = asyncio.get_event_loop()
         blocking_tasks = []
 
-        for directory in directories:
-
-            blocking_tasks.append(
-                loop.run_in_executor(
-                    executor,
-                    compress_encrypt_store,
-                    directory,
-                    password,
-                    s3_bucket,
-                    force,
+        # uses a pool worker threads to execute calls asynchronously
+        # in a separate thread
+        with ThreadPoolExecutor() as executor:
+            for directory in directories:
+                blocking_tasks.append(
+                    loop.run_in_executor(
+                        executor,
+                        compress_encrypt_store,
+                        directory,
+                        password,
+                        s3_bucket,
+                        force,
+                    )
                 )
-            )
+            results = await asyncio.gather(*blocking_tasks)
 
-        completed, pending = await asyncio.wait(blocking_tasks, timeout=timeout)
-        results = [t.result() for t in completed]
         for r in results:
             for k, v in r.items():
                 final_dict[k] = v

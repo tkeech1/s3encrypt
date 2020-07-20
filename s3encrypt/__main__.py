@@ -23,7 +23,7 @@ import argparse
 import asyncio
 import typing
 
-from s3encrypt.s3encrypt import S3EncryptError, s3encrypt_async
+from s3encrypt.s3encrypt import S3EncryptError, s3encrypt_async, validate_directory
 from s3encrypt.file_watch import DirectoryWatcher
 
 logger = logging.getLogger(__package__)
@@ -96,19 +96,13 @@ async def main_async(args: argparse.Namespace) -> typing.Any:
 
     try:
         timeout = 40
-        task = [
-            asyncio.create_task(
-                s3encrypt_async(
-                    directories=args.directories,
-                    password=args.password,
-                    s3_bucket=args.s3_bucket,
-                    force=args.force,
-                    timeout=timeout,
-                )
-            )
-        ]
-        await asyncio.wait(task, timeout=timeout)
-        return task
+        await s3encrypt_async(
+            directories=args.directories,
+            password=args.password,
+            s3_bucket=args.s3_bucket,
+            force=args.force,
+            timeout=timeout,
+        )
     except S3EncryptError as e:
         logger.error(e)
 
@@ -150,6 +144,11 @@ def main() -> None:
 
         watcher = DirectoryWatcher()
         for directory in args.directories:
+            try:
+                directory = validate_directory(directory)
+            except S3EncryptError:
+                logger.info(f"{directory} is not a valid directory. Skipping.")
+                continue
             logger.debug(f"Starting watch for {directory}")
             watcher.add_watched_directory(
                 directory, args.password, args.s3_bucket, args.force
@@ -160,9 +159,7 @@ def main() -> None:
         # store mode
         logger.debug("Starting in STORE mode")
         try:
-            task = asyncio.run(main_async(args))
-            for t in task:
-                logger.debug(f"done {t.result()}")
+            asyncio.run(main_async(args))
         except Exception as e:
             logger.error(e)
 

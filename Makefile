@@ -7,10 +7,10 @@ AWS_REGION?=AWS_REGION
 
 # run as a module
 run-module: format lint test	
-	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
+	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --password 12345 --force 
 
 run-module-watch: format lint test	
-	python -m s3encrypt --log-level DEBUG --mode watch --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
+	python -m s3encrypt --log-level INFO --mode watch --directories testfiles/testzip testfiles/testzipsdsd2 --s3_bucket tdk-bd-keep.io --password 12345 --force 
 
 run-profile:	
 	python -m cProfile -s time -o profile.cprof runner.py
