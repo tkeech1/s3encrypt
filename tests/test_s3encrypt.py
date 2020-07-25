@@ -159,9 +159,5 @@ async def test_s3encrypt_async(mock_compress_encrypt_store):
 
     # error in s3encrypt_async
     with pytest.raises(S3EncryptError):
-        # mock_compress_encrypt_store.side_effect = Exception("exception")
-        mock_compress_encrypt_store.side_effect = [
-            {"file1": "url1"},
-            {"file2": "url2"},
-        ]
+        mock_compress_encrypt_store.side_effect = Exception("exception")
         await s3encrypt_async(directories, password, s3_bucket, force, timeout)
