@@ -12,9 +12,10 @@ from unittest import mock
 import pytest
 import hashlib
 import botocore
+import typing
 
 
-def test_validate_directory():
+def test_validate_directory() -> None:
     with mock.patch("s3encrypt.s3encrypt.os") as mock_os:
         mock_os.sep = "/"
         mock_os.path.isdir.return_value = True
@@ -29,7 +30,7 @@ def test_validate_directory():
 
 @mock.patch("s3encrypt.s3encrypt.os.walk")
 @mock.patch("s3encrypt.s3encrypt.zipfile.ZipFile")
-def test_compress_directory(mock_zipfile, mock_os_walk):
+def test_compress_directory(mock_zipfile: mock.Mock, mock_os_walk: mock.Mock) -> None:
     archive = mock.Mock()
     mocked_write = mock.Mock()
     archive.return_value.write = mocked_write
@@ -57,7 +58,7 @@ def test_compress_directory(mock_zipfile, mock_os_walk):
 
 
 @mock.patch("s3encrypt.s3encrypt.boto3.session.Session")
-def test_store_to_s3(mock_boto3_session):
+def test_store_to_s3(mock_boto3_session: mock.Mock) -> None:
     client = mock.Mock()
     client.upload_file.return_value = None
     sess = mock.Mock()
@@ -84,13 +85,13 @@ def test_store_to_s3(mock_boto3_session):
 @mock.patch("s3encrypt.s3encrypt.encrypt_file")
 @mock.patch("s3encrypt.s3encrypt.store_to_s3")
 def test_compress_encrypt_store(
-    mock_store_to_s3,
-    mock_encrypt_file,
-    mock_compress_directory,
-    mock_validate_directory,
-    mock_tempfile,
-    mock_os_remove,
-):
+    mock_store_to_s3: mock.Mock,
+    mock_encrypt_file: mock.Mock,
+    mock_compress_directory: mock.Mock,
+    mock_validate_directory: mock.Mock,
+    mock_tempfile: mock.Mock,
+    mock_os_remove: mock.Mock,
+) -> None:
 
     # happy path
     directory = "/dir"
@@ -126,8 +127,8 @@ def test_compress_encrypt_store(
 
 @pytest.mark.asyncio
 @mock.patch("s3encrypt.s3encrypt.compress_encrypt_store")
-async def test_s3encrypt_async(mock_compress_encrypt_store):
-    directories = []
+async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
+    directories: typing.List[str] = []
     password = "pass"
     s3_bucket = "s3_bucket"
     force = True

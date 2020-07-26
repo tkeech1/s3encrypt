@@ -21,7 +21,6 @@ import logging
 import logging.config
 import argparse
 import asyncio
-import typing
 
 from s3encrypt.s3encrypt import S3EncryptError, s3encrypt_async, validate_directory
 from s3encrypt.file_watch import DirectoryWatcher
@@ -30,7 +29,7 @@ logger = logging.getLogger(__package__)
 
 
 def get_args() -> argparse.Namespace:
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Zip, encrypt and store a directory to S3."
     )
 
@@ -92,21 +91,6 @@ def get_args() -> argparse.Namespace:
     return args
 
 
-async def main_async(args: argparse.Namespace) -> typing.Any:
-
-    try:
-        timeout = 40
-        await s3encrypt_async(
-            directories=args.directories,
-            password=args.password,
-            s3_bucket=args.s3_bucket,
-            force=args.force,
-            timeout=timeout,
-        )
-    except S3EncryptError as e:
-        logger.error(e)
-
-
 def main() -> None:
 
     args = get_args()
@@ -131,8 +115,6 @@ def main() -> None:
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-
-    args = get_args()
 
     if args.mode == "watch":
         # watch mode
@@ -159,7 +141,15 @@ def main() -> None:
         # store mode
         logger.debug("Starting in STORE mode")
         try:
-            asyncio.run(main_async(args))
+            asyncio.run(
+                s3encrypt_async(
+                    directories=args.directories,
+                    password=args.password,
+                    s3_bucket=args.s3_bucket,
+                    force=args.force,
+                    timeout=40,
+                )
+            )
         except Exception as e:
             logger.error(e)
 

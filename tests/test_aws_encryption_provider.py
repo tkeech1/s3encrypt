@@ -10,7 +10,7 @@ from aws_encryption_sdk.internal.crypto import WrappingKey
 
 
 @mock.patch("s3encrypt.s3encrypt.zipfile.ZipFile")
-def test_get_master_key_provider(mock_zipfile) -> None:
+def test_get_master_key_provider(mock_zipfile: mock.Mock) -> None:
     key_id = b"some_key___"
     master_key_provider = get_master_key_provider(key_id)
     raw_key = master_key_provider._get_raw_key(key_id)
@@ -19,7 +19,7 @@ def test_get_master_key_provider(mock_zipfile) -> None:
 
 
 @mock.patch("s3encrypt.aws_encryption_provider.aws_encryption_sdk.stream")
-def test_encrypt_file(mock_stream) -> None:
+def test_encrypt_file(mock_stream: mock.Mock) -> None:
     mock_stream.return_value.__enter__.return_value = ["text to write"]
     mock_open = mock.mock_open()
     mock_write = mock.mock_open(read_data="Data2").return_value
@@ -41,7 +41,7 @@ def test_encrypt_file(mock_stream) -> None:
 
 
 @mock.patch("s3encrypt.aws_encryption_provider.aws_encryption_sdk.stream")
-def test_decrypt_file(mock_stream) -> None:
+def test_decrypt_file(mock_stream: mock.Mock) -> None:
     mock_stream.return_value.__enter__.return_value = ["text to write"]
     mock_open = mock.mock_open()
     mock_write = mock.mock_open(read_data="Data2").return_value
