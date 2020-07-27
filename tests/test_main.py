@@ -1,4 +1,4 @@
-import mock
+import unittest.mock as mock
 import pytest
 
 from s3encrypt.__main__ import get_args
