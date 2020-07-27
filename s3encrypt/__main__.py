@@ -21,6 +21,7 @@ import logging
 import logging.config
 import argparse
 import asyncio
+import sys
 
 from s3encrypt.s3encrypt import S3EncryptError, s3encrypt_async, validate_directory
 from s3encrypt.file_watch import DirectoryWatcher
@@ -40,7 +41,6 @@ def get_args() -> argparse.Namespace:
         action="store",
         nargs="?",
     )
-
     parser.add_argument(
         "--mode",
         type=str,
@@ -51,7 +51,6 @@ def get_args() -> argparse.Namespace:
         + "stores the directory to S3 upon change.",
         default="store",
     )
-
     parser.add_argument(
         "--directories",
         type=str,
@@ -84,9 +83,9 @@ def get_args() -> argparse.Namespace:
         default=False,
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(sys.argv[1:])
 
-    logger.debug(f"Args: directories={args.directories}, s3_bucket={args.s3_bucket}, ")
+    logger.debug(f"Args: directories={args.directories}, s3_bucket={args.s3_bucket}")
 
     return args
 
