@@ -90,7 +90,7 @@ def get_args() -> argparse.Namespace:
     return args
 
 
-def main() -> None:
+def main() -> int:
 
     args = get_args()
 
@@ -121,7 +121,7 @@ def main() -> None:
         process_limit = 5
         if len(args.directories) > process_limit:
             logger.info(f"Maximum number of watched directories is {process_limit}")
-            return
+            return 1
 
         watcher = DirectoryWatcher()
         for directory in args.directories:
@@ -139,19 +139,22 @@ def main() -> None:
     else:
         # store mode
         logger.debug("Starting in STORE mode")
-        try:
-            asyncio.run(
-                s3encrypt_async(
-                    directories=args.directories,
-                    password=args.password,
-                    s3_bucket=args.s3_bucket,
-                    force=args.force,
-                    timeout=40,
-                )
+        asyncio.run(
+            s3encrypt_async(
+                directories=args.directories,
+                password=args.password,
+                s3_bucket=args.s3_bucket,
+                force=args.force,
+                timeout=40,
             )
-        except Exception as e:
-            logger.error(e)
+        )
+
+    return 0
 
 
-if __name__ == "__main__":
-    main()
+def init() -> None:
+    if __name__ == "__main__":
+        sys.exit(main())
+
+
+init()
