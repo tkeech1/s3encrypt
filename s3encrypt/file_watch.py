@@ -49,15 +49,10 @@ class DirectoryWatcher(object):
         self.__event_observer.schedule(event_handler, src_path, recursive=True)
 
 
-# class DirectoryChangeEventHandler(RegexMatchingEventHandler):
-class DirectoryChangeEventHandler(FileSystemEventHandler):
-
-    # FILE_REGEX = [r".*"]
-
+class DirectoryChangeEventHandler(FileSystemEventHandler):  # type: ignore
     def __init__(
         self, src_path: str, password: str, s3_bucket: str, force: bool,
     ) -> None:
-        # super().__init__(self.FILE_REGEX)
         self.__src_path = src_path
         self.__password = password
         self.__s3_bucket = s3_bucket

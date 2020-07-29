@@ -46,7 +46,7 @@ format:
 
 lint: format
 	flake8 s3encrypt
-	mypy s3encrypt
+	mypy s3encrypt --strict
 
 tox:
 	tox
