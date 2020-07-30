@@ -82,11 +82,11 @@ def test_store_to_s3(mock_boto3_session: mock.Mock) -> None:
 @mock.patch("s3encrypt.s3encrypt.tempfile")
 @mock.patch("s3encrypt.s3encrypt.validate_directory")
 @mock.patch("s3encrypt.s3encrypt.compress_directory")
-@mock.patch("s3encrypt.s3encrypt.encrypt_file")
+@mock.patch("s3encrypt.s3encrypt.AWSEncryption")
 @mock.patch("s3encrypt.s3encrypt.store_to_s3")
 def test_compress_encrypt_store(
     mock_store_to_s3: mock.Mock,
-    mock_encrypt_file: mock.Mock,
+    mock_AWSEncryption: mock.Mock,
     mock_compress_directory: mock.Mock,
     mock_validate_directory: mock.Mock,
     mock_tempfile: mock.Mock,
@@ -101,10 +101,12 @@ def test_compress_encrypt_store(
     mock_tempfile.mkstemp.return_value = ("", "some_file")
     mock_validate_directory.return_value = directory
     mock_os_remove.return_value = None
+    mock_encrypt_file = mock.Mock()
+    mock_AWSEncryption.return_value = mock_encrypt_file
     compress_encrypt_store(directory, password, s3bucket, force)
     mock_validate_directory.assert_called_once_with(directory)
     mock_compress_directory.assert_called_once_with(directory, "some_file")
-    mock_encrypt_file.assert_called_once_with(
+    mock_encrypt_file.encrypt_file.assert_called_once_with(
         hashlib.sha256(bytes(password, "utf-8")).digest(), "some_file", "some_file",
     )
     mock_store_to_s3.assert_called_once_with("some_file", s3bucket, "dir.zip.enc")

@@ -8,9 +8,7 @@ import tempfile
 import hashlib
 import boto3
 import botocore
-from s3encrypt.aws_encryption_provider import encrypt_file
-
-# from memory_profiler import profile
+from s3encrypt.encryption.aws_encryption import AWSEncryption
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +53,11 @@ def compress_encrypt_store(
         )
 
         key_bytes = hashlib.sha256(bytes(password, "utf-8")).digest()
-        encrypt_file(key_bytes, compressed_file_path, encrypted_file_path)
+
+        # TODO factory method
+        encryption = AWSEncryption()
+
+        encryption.encrypt_file(key_bytes, compressed_file_path, encrypted_file_path)
         logger.info(
             f"Finished creating encrypted file for {directory} at {encrypted_file_path}"
         )
