@@ -34,53 +34,41 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):  # type: ignore
         )
 
 
-class AWSEncryption(FileEncryptDecrypt):
-    def get_master_key_provider(self, key_id: bytes) -> RawMasterKeyProvider:
-        master_key_provider = StaticRandomMasterKeyProvider()
-        master_key_provider.add_master_key(key_id)
-        return master_key_provider
+def get_master_key_provider(key_id: bytes) -> RawMasterKeyProvider:
+    master_key_provider = StaticRandomMasterKeyProvider()
+    master_key_provider.add_master_key(key_id)
+    return master_key_provider
 
-    def encrypt_file(
-        self, key: bytes, file_path: str, encrypted_file_path: str
-    ) -> None:
+
+class AWSEncryption(FileEncryptDecrypt):
+    def __init__(self, key: bytes, input_file_path: str, output_file_path: str):
+        self.key = key
+        self.input_file_path = input_file_path
+        self.output_file_path = output_file_path
+
+    def __encrypt_decrypt_file(self, mode: str) -> None:
         try:
-            master_key_provider = self.get_master_key_provider(key)
-            with open(file_path, "rb") as plaintext, open(
-                encrypted_file_path, "wb"
-            ) as ciphertext:
+            master_key_provider = get_master_key_provider(self.key)
+            with open(self.input_file_path, "rb") as input_text, open(
+                self.output_file_path, "wb"
+            ) as output_text:
                 with aws_encryption_sdk.stream(
-                    mode="e", source=plaintext, key_provider=master_key_provider
-                ) as encryptor:
-                    for index, chunk in enumerate(encryptor):
-                        ciphertext.write(chunk)
+                    mode=mode, source=input_text, key_provider=master_key_provider
+                ) as encryptor_decryptor:
+                    for index, chunk in enumerate(encryptor_decryptor):
+                        output_text.write(chunk)
                         logger.info(f"Wrote chunk {index}")
 
         except Exception as e:
             logger.error(e)
             logger.error(
-                f"Args: file_path={file_path}, "
-                + f"encrypted_file_path={encrypted_file_path}"
+                f"Args: input_file_path={self.input_file_path}, "
+                + f"output_file_path={self.output_file_path}"
             )
             raise EncryptionError(" s3encrypt.encryption encountered an error ", e)
 
-    def decrypt_file(
-        self, key: bytes, file_path: str, decrypted_file_path: str
-    ) -> None:
-        try:
-            master_key_provider = self.get_master_key_provider(key)
-            with open(file_path, "rb") as ciphertext, open(
-                decrypted_file_path, "wb"
-            ) as plaintext:
-                with aws_encryption_sdk.stream(
-                    mode="d", source=ciphertext, key_provider=master_key_provider
-                ) as decryptor:
-                    for chunk in decryptor:
-                        plaintext.write(chunk)
+    def decrypt_file(self) -> None:
+        self.__encrypt_decrypt_file("d")
 
-        except Exception as e:
-            logger.error(e)
-            logger.error(
-                f"Args: file_path={file_path}, "
-                + f"decrypted_file_path={decrypted_file_path}"
-            )
-            raise EncryptionError(" s3encrypt.encryption encountered an error ", e)
+    def encrypt_file(self) -> None:
+        self.__encrypt_decrypt_file("e")

@@ -3,15 +3,11 @@ from abc import ABC, abstractmethod
 
 class FileEncryptDecrypt(ABC):
     @abstractmethod
-    def encrypt_file(
-        self, key: bytes, file_path: str, encrypted_file_path: str
-    ) -> None:
+    def encrypt_file(self) -> None:
         raise NotImplementedError("Not implemented")
 
     @abstractmethod
-    def decrypt_file(
-        self, key: bytes, file_path: str, decrypted_file_path: str
-    ) -> None:
+    def decrypt_file(self) -> None:
         raise NotImplementedError("Not implemented")
 
 

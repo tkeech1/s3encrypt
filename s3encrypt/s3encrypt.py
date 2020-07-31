@@ -55,9 +55,9 @@ def compress_encrypt_store(
         key_bytes = hashlib.sha256(bytes(password, "utf-8")).digest()
 
         # TODO factory method
-        encryption = AWSEncryption()
+        encryption = AWSEncryption(key_bytes, compressed_file_path, encrypted_file_path)
 
-        encryption.encrypt_file(key_bytes, compressed_file_path, encrypted_file_path)
+        encryption.encrypt_file()
         logger.info(
             f"Finished creating encrypted file for {directory} at {encrypted_file_path}"
         )
@@ -173,7 +173,7 @@ async def s3encrypt_async(
     Args:
             directories (List[str]): directories
 
-            password (str): the password used to generate the encryption key.
+            password (str): the password used to generate the encryption key
 
             s3_bucket (str): the S3 bucket for upload
 

@@ -6,7 +6,7 @@ import shutil
 import logging
 import hashlib
 from s3encrypt.s3encrypt import compress_encrypt_store
-from s3encrypt.aws_encryption_provider import decrypt_file
+from s3encrypt.encryption.aws_encryption import AWSEncryption
 
 logger = logging.getLogger(__package__)
 logger.setLevel(logging.INFO)
@@ -56,7 +56,8 @@ def e2e():
         logger.info(f"Downloaded encrypted file from {bucket}")
 
         key_bytes = hashlib.sha256(bytes(key, "utf-8")).digest()
-        decrypt_file(key_bytes, tmp_encrypted_file, tmp_unencrypted_file)
+        aws_encryption = AWSEncryption(key_bytes, tmp_encrypted_file, tmp_unencrypted_file)
+        aws_encryption.decrypt_file()
 
         with zipfile.ZipFile(tmp_unencrypted_file, "r") as zip_ref:
             zip_ref.extractall(tmp_extract_dir_path)

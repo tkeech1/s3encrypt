@@ -106,9 +106,7 @@ def test_compress_encrypt_store(
     compress_encrypt_store(directory, password, s3bucket, force)
     mock_validate_directory.assert_called_once_with(directory)
     mock_compress_directory.assert_called_once_with(directory, "some_file")
-    mock_encrypt_file.encrypt_file.assert_called_once_with(
-        hashlib.sha256(bytes(password, "utf-8")).digest(), "some_file", "some_file",
-    )
+    mock_encrypt_file.encrypt_file.assert_called_once_with()
     mock_store_to_s3.assert_called_once_with("some_file", s3bucket, "dir.zip.enc")
 
     # error removing tmp file
