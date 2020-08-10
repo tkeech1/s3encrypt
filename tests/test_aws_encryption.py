@@ -1,4 +1,4 @@
-from s3encrypt.encryption.aws_encryption import AWSEncryption,get_master_key_provider
+from s3encrypt.encryption.aws_encryption import AWSEncryption, get_master_key_provider
 from s3encrypt.encryption.base_encryption import EncryptionError
 from unittest import mock
 import pytest  # type: ignore
@@ -16,7 +16,7 @@ def test_get_master_key_provider(mock_zipfile: mock.Mock) -> None:
 
 @mock.patch("s3encrypt.encryption.aws_encryption.aws_encryption_sdk.stream")
 def test_encrypt_decrypt_file(mock_stream: mock.Mock) -> None:
-    aws_encryption = AWSEncryption(b'bytes','somepath','someotherpath')
+    aws_encryption = AWSEncryption(b"bytes", "somepath", "someotherpath")
     mock_stream.return_value.__enter__.return_value = ["text to write"]
     mock_open = mock.mock_open()
     mock_write = mock.mock_open(read_data="Data2").return_value
@@ -34,12 +34,12 @@ def test_encrypt_decrypt_file(mock_stream: mock.Mock) -> None:
     with mock.patch("s3encrypt.encryption.aws_encryption.open", mock_open):
         with pytest.raises(Exception) as exception_info:
             aws_encryption.encrypt_file()
-            assert isinstance(exception_info.value, EncrypterError)
+            assert isinstance(exception_info.value, EncryptionError)
 
 
 @mock.patch("s3encrypt.encryption.aws_encryption.aws_encryption_sdk.stream")
 def test_decrypt_file(mock_stream: mock.Mock) -> None:
-    aws_encryption = AWSEncryption(b'bytes','somepath','someotherpath')
+    aws_encryption = AWSEncryption(b"bytes", "somepath", "someotherpath")
     mock_stream.return_value.__enter__.return_value = ["text to write"]
     mock_open = mock.mock_open()
     mock_write = mock.mock_open(read_data="Data2").return_value
@@ -57,4 +57,4 @@ def test_decrypt_file(mock_stream: mock.Mock) -> None:
     with mock.patch("s3encrypt.encryption.aws_encryption.open", mock_open):
         with pytest.raises(Exception) as exception_info:
             aws_encryption.decrypt_file()
-            assert isinstance(exception_info.value, EncrypterError)
+            assert isinstance(exception_info.value, EncryptionError)

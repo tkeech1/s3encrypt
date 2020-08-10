@@ -9,8 +9,11 @@ import hashlib
 import boto3
 import botocore
 from s3encrypt.encryption.aws_encryption import AWSEncryption
+from s3encrypt.encryption.base_encryption import FileEncryptDecryptFactory
 
 logger = logging.getLogger(__name__)
+
+encryption_method = {"aws": AWSEncryption}
 
 
 def compress_encrypt_store(
@@ -55,7 +58,11 @@ def compress_encrypt_store(
         key_bytes = hashlib.sha256(bytes(password, "utf-8")).digest()
 
         # TODO factory method
-        encryption = AWSEncryption(key_bytes, compressed_file_path, encrypted_file_path)
+        encryption_factory = FileEncryptDecryptFactory(
+            key_bytes, compressed_file_path, encrypted_file_path
+        )
+        encryption_factory.register_encryption_method("aws", AWSEncryption)
+        encryption = encryption_factory.get_encryption("aws")
 
         encryption.encrypt_file()
         logger.info(

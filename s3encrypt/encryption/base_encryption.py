@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import typing
 
 
 class FileEncryptDecrypt(ABC):
@@ -18,3 +19,25 @@ class EncryptionError(Exception):
     def __init__(self, msg: str, original_exception: Exception = Exception()):
         super(EncryptionError, self).__init__(f"{msg}: {original_exception}")
         self.original_exception = original_exception
+
+
+# TODO: Fix use of typing.Any
+class FileEncryptDecryptFactory:
+    def __init__(self, key_bytes: bytes, input_file_path: str, output_file_path: str):
+        self.key_bytes = key_bytes
+        self.input_file_path = input_file_path
+        self.output_file_path = output_file_path
+        self._encryption_methods: typing.Dict[str, typing.Any] = {}
+
+    def register_encryption_method(
+        self, key: str, encryption_method: typing.Any
+    ) -> None:
+        self._encryption_methods[key] = encryption_method
+
+    def get_encryption(self, key: str) -> typing.Any:
+        encryption_method = self._encryption_methods.get(key)
+        if not encryption_method:
+            raise ValueError(key)
+        return encryption_method(
+            self.key_bytes, self.input_file_path, self.output_file_path
+        )
