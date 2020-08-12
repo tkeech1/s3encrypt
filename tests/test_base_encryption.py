@@ -1,10 +1,15 @@
 import pytest
+import typing
+
 
 from s3encrypt.encryption.base_encryption import (
     FileEncryptDecrypt,
-    FileEncryptDecryptFactory,
+    EncryptionFactory,
 )
-from s3encrypt.encryption.aws_encryption import AWSEncryption
+from s3encrypt.encryption.aws_encryption import (
+    AWSEncryptionService,
+    AWSEncryptionServiceBuilder,
+)
 
 
 def test_aws_encryption() -> None:
@@ -24,11 +29,16 @@ def test_aws_encryption() -> None:
         tbe.decrypt_file()
 
 
-def test_get_encryption() -> None:
-    encryption_factory = FileEncryptDecryptFactory(b"", "", "")
-    encryption_factory.register_encryption_method("aws", AWSEncryption)
-    encryption = encryption_factory.get_encryption("aws")
-    assert isinstance(encryption, AWSEncryption)
+def test_object_factory() -> None:
+    encryption_factory = EncryptionFactory()
+    encryption_factory.register_builder("aws", AWSEncryptionServiceBuilder())
+    config: typing.Dict[str, typing.Any] = {
+        "key_bytes": b"",
+        "input_file_path": "compressed_file_path",
+        "output_file_path": "encrypted_file_path",
+    }
+    encryption = encryption_factory.create(key="aws", **config)
+    assert isinstance(encryption, AWSEncryptionService)
 
     with pytest.raises(ValueError):
-        encryption_factory.get_encryption("blah")
+        encryption_factory.create("blah")

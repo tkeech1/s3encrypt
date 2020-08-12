@@ -40,7 +40,7 @@ def get_master_key_provider(key_id: bytes) -> RawMasterKeyProvider:
     return master_key_provider
 
 
-class AWSEncryption(FileEncryptDecrypt):
+class AWSEncryptionService(FileEncryptDecrypt):
     def __init__(self, key: bytes, input_file_path: str, output_file_path: str):
         self.key = key
         self.input_file_path = input_file_path
@@ -72,3 +72,22 @@ class AWSEncryption(FileEncryptDecrypt):
 
     def encrypt_file(self) -> None:
         self.__encrypt_decrypt_file("e")
+
+
+class AWSEncryptionServiceBuilder:
+    def __init__(self) -> None:
+        self._instance: AWSEncryptionService = None  # type: ignore
+
+    def __call__(
+        self,
+        key: bytes,
+        input_file_path: str,
+        output_file_path: str,
+        **_ignore: typing.Dict[str, typing.Any],
+    ) -> AWSEncryptionService:
+        # if not self._instance:
+        #    self._instance = AWSEncryptionService(
+        #        key, input_file_path, output_file_path
+        #    )
+        # return self._instance
+        return AWSEncryptionService(key, input_file_path, output_file_path)

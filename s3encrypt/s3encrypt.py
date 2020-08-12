@@ -8,12 +8,13 @@ import tempfile
 import hashlib
 import boto3
 import botocore
-from s3encrypt.encryption.aws_encryption import AWSEncryption
-from s3encrypt.encryption.base_encryption import FileEncryptDecryptFactory
+from s3encrypt.encryption.aws_encryption import AWSEncryptionServiceBuilder
+from s3encrypt.encryption.base_encryption import EncryptionFactory
 
 logger = logging.getLogger(__name__)
 
-encryption_method = {"aws": AWSEncryption}
+encryption_factory = EncryptionFactory()
+encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
 
 
 def compress_encrypt_store(
@@ -57,12 +58,13 @@ def compress_encrypt_store(
 
         key_bytes = hashlib.sha256(bytes(password, "utf-8")).digest()
 
-        # TODO factory method
-        encryption_factory = FileEncryptDecryptFactory(
-            key_bytes, compressed_file_path, encrypted_file_path
-        )
-        encryption_factory.register_encryption_method("aws", AWSEncryption)
-        encryption = encryption_factory.get_encryption("aws")
+        config: typing.Dict[str, typing.Any] = {
+            "key_bytes": key_bytes,
+            "input_file_path": compressed_file_path,
+            "output_file_path": encrypted_file_path,
+        }
+        # object factory
+        encryption = encryption_factory.create(key="aws-local", **config)
 
         encryption.encrypt_file()
         logger.info(

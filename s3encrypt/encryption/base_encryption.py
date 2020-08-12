@@ -22,22 +22,15 @@ class EncryptionError(Exception):
 
 
 # TODO: Fix use of typing.Any
-class FileEncryptDecryptFactory:
-    def __init__(self, key_bytes: bytes, input_file_path: str, output_file_path: str):
-        self.key_bytes = key_bytes
-        self.input_file_path = input_file_path
-        self.output_file_path = output_file_path
-        self._encryption_methods: typing.Dict[str, typing.Any] = {}
+class EncryptionFactory:
+    def __init__(self) -> None:
+        self._builders: typing.Dict[str, typing.Any] = {}
 
-    def register_encryption_method(
-        self, key: str, encryption_method: typing.Any
-    ) -> None:
-        self._encryption_methods[key] = encryption_method
+    def register_builder(self, key: str, builder: typing.Any) -> None:
+        self._builders[key] = builder
 
-    def get_encryption(self, key: str) -> typing.Any:
-        encryption_method = self._encryption_methods.get(key)
-        if not encryption_method:
+    def create(self, key: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Any:
+        builder = self._builders.get(key)
+        if not builder:
             raise ValueError(key)
-        return encryption_method(
-            self.key_bytes, self.input_file_path, self.output_file_path
-        )
+        return builder(key=key, **kwargs)

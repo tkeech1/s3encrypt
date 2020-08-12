@@ -81,11 +81,11 @@ def test_store_to_s3(mock_boto3_session: mock.Mock) -> None:
 @mock.patch("s3encrypt.s3encrypt.tempfile")
 @mock.patch("s3encrypt.s3encrypt.validate_directory")
 @mock.patch("s3encrypt.s3encrypt.compress_directory")
-@mock.patch("s3encrypt.s3encrypt.FileEncryptDecryptFactory.get_encryption")
+@mock.patch("s3encrypt.s3encrypt.EncryptionFactory.create")
 @mock.patch("s3encrypt.s3encrypt.store_to_s3")
 def test_compress_encrypt_store(
     mock_store_to_s3: mock.Mock,
-    mock_FileEncryptDecryptFactory: mock.Mock,
+    mock_EncryptionFactory: mock.Mock,
     mock_compress_directory: mock.Mock,
     mock_validate_directory: mock.Mock,
     mock_tempfile: mock.Mock,
@@ -102,7 +102,7 @@ def test_compress_encrypt_store(
     mock_validate_directory.return_value = directory
     mock_os_remove.return_value = None
     mock_encrypt_file = mock.Mock()
-    mock_FileEncryptDecryptFactory.return_value = mock_encrypt_file
+    mock_EncryptionFactory.return_value = mock_encrypt_file
     compress_encrypt_store(directory, password, s3bucket, force)
     mock_validate_directory.assert_called_once_with(directory)
     mock_compress_directory.assert_called_once_with(directory, "some_file")
