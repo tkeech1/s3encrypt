@@ -58,13 +58,13 @@ def e2e():
 
         key_bytes = hashlib.sha256(bytes(key, "utf-8")).digest()
         encryption_factory = EncryptionFactory()
-        encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
+        encryption_factory.register_builder("aws", AWSEncryptionServiceBuilder())
         config = {
             "key_bytes": key_bytes,
             "input_file_path": tmp_encrypted_file,
             "output_file_path": tmp_unencrypted_file,
         }
-        encryption = encryption_factory.create(key="aws-local", **config)
+        encryption = encryption_factory.create(key="aws", **config)
 
         encryption.decrypt_file()
 

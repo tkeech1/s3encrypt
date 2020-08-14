@@ -33,4 +33,4 @@ class EncryptionFactory:
         builder = self._builders.get(key)
         if not builder:
             raise ValueError(key)
-        return builder(key=key, **kwargs)
+        return builder(**kwargs)
