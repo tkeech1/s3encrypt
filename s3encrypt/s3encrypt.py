@@ -205,7 +205,7 @@ async def s3encrypt_async(
         loop = asyncio.get_event_loop()
         blocking_tasks = []
 
-        # uses a pool worker threads to execute calls asynchronously
+        # uses a pool of worker threads to execute calls asynchronously
         # each in a separate thread
         with ThreadPoolExecutor() as executor:
             for directory in directories:
