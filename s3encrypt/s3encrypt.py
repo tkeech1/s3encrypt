@@ -10,6 +10,7 @@ import boto3
 import botocore
 from s3encrypt.encryption.aws_encryption import AWSEncryptionServiceBuilder
 from s3encrypt.encryption.base_encryption import EncryptionFactory
+from s3encrypt.decorator import log_start_stop_time
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ encryption_factory = EncryptionFactory()
 encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
 
 
+@log_start_stop_time
 def compress_encrypt_store(
     directory: str, password: str, s3_bucket: str, force: bool
 ) -> typing.Dict[str, str]:
