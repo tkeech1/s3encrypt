@@ -10,7 +10,7 @@ import boto3
 import botocore
 from s3encrypt.encryption.aws_encryption import AWSEncryptionServiceBuilder
 from s3encrypt.encryption.base_encryption import EncryptionFactory
-from s3encrypt.decorator import log_start_stop_time
+from s3encrypt.decorator import log_start_stop_time, async_log_start_stop_time
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +104,7 @@ def compress_encrypt_store(
             raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
+@log_start_stop_time
 def validate_directory(directory: str) -> str:
     # remove the directory separator if it's the last character
     # in the directory name
@@ -119,6 +120,7 @@ def validate_directory(directory: str) -> str:
     return directory
 
 
+@log_start_stop_time
 def compress_directory(directory: str, compressed_file_path: str) -> None:
     try:
 
@@ -138,6 +140,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
+@log_start_stop_time
 def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str) -> str:
     try:
         # TODO - check for existence of the file before overwriting
@@ -172,6 +175,7 @@ def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str) -> str:
     )
 
 
+@async_log_start_stop_time
 async def s3encrypt_async(
     directories: typing.List[str],
     password: str,

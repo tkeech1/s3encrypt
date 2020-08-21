@@ -57,7 +57,7 @@ class AWSEncryptionService(FileEncryptDecrypt):
                 ) as encryptor_decryptor:
                     for index, chunk in enumerate(encryptor_decryptor):
                         output_text.write(chunk)
-                        logger.info(f"Wrote chunk {index}")
+                        logger.debug(f"Wrote chunk {index}")
 
         except Exception as e:
             logger.error(e)
