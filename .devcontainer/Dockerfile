@@ -1,6 +1,6 @@
 FROM python:3.8-buster
 
-ARG USERNAME=tk
+ARG USERNAME=python
 # On Linux, replace with your actual UID, GID if not the default 1000
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
@@ -18,6 +18,6 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # change the username
 USER $USERNAME
 
-RUN pip install pipenv pytest black flake8 mypy pylint --upgrade --user
+RUN pip install pipenv --upgrade --user
 
 ENV PATH="${PATH}:/home/${USERNAME}/.local/bin"

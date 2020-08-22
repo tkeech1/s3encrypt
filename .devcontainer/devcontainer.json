@@ -17,7 +17,7 @@
         // for the needed Dockerfile updates and then uncomment the next line.
         // "-u", "vscode"
         "-u",
-        "tk",
+        "python",
         "-e",
         "AWS_ACCESS_KEY_ID=${env:AWS_ACCESS_KEY_ID}",
         "-e",
