@@ -49,7 +49,7 @@ lint: format
 	mypy s3encrypt --strict
 
 tox:
-	tox
+	pyenv local 3.7.0 3.8.0 && tox
 
 clean-all: clean
 	rm -r .venv/ || true	

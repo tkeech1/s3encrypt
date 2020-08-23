@@ -15,9 +15,22 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # * Anything else you want to do like clean up goes here *
 # ********************************************************
 
+# dependencies for pyenv
+RUN apt-get update && apt-get install -y git make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl && rm -rf /var/lib/apt/lists/*
+
 # change the username
 USER $USERNAME
 
-RUN pip install pipenv --upgrade --user
+# install pyenv 
+RUN curl https://pyenv.run | bash
 
-ENV PATH="${PATH}:/home/${USERNAME}/.local/bin"
+RUN pip install pipenv tox tox-pyenv --upgrade --user
+
+ENV PATH="${PATH}:/home/${USERNAME}/.local/bin:/home/${USERNAME}/.pyenv/bin"
+
+# setup pyenv
+RUN echo 'eval "$(pyenv init -)"' >> /home/${USERNAME}/.bashrc
+RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /home/${USERNAME}/.bashrc
+
+RUN pyenv update && pyenv install -v 3.7.0
+RUN pyenv update && pyenv install -v 3.8.0
