@@ -1,5 +1,6 @@
 import unittest.mock as mock
 from unittest.mock import call
+from asyncio import Future
 import pytest
 
 from s3encrypt.__main__ import main
@@ -34,6 +35,7 @@ def test_main(
         "--password",
         "pass",
     ]
+
     mock_s3encrypt.return_value = None
     main()
 

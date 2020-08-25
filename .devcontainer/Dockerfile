@@ -1,4 +1,5 @@
 FROM python:3.8-buster
+#FROM ubuntu:focal
 
 ARG USERNAME=python
 # On Linux, replace with your actual UID, GID if not the default 1000
@@ -34,3 +35,6 @@ RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /home/${USERNAME}/.bashrc
 
 RUN pyenv update && pyenv install -v 3.7.0
 RUN pyenv update && pyenv install -v 3.8.0
+
+ENV PYENV_ROOT="/home/${USERNAME}/.pyenv"
+ENV PIPENV_PYTHON="${PYENV_ROOT}/shims/python"

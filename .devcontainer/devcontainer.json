@@ -25,7 +25,7 @@
         "-e",
         "AWS_DEFAULT_REGION=${env:AWS_REGION}",
         "-e",
-        "PIPENV_VENV_IN_PROJECT=enabled",
+        "PIPENV_VENV_IN_PROJECT=true",
         "-e",
         "PIPENV_IGNORE_VIRTUALENVS=1",
     ],

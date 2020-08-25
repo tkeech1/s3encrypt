@@ -49,34 +49,34 @@ lint: format
 	mypy s3encrypt --strict
 
 tox:
-	pyenv local 3.7.0 3.8.0 && tox
+	pyenv local 3.7.0 3.8.0 && tox && rm .python-version
 
 clean-all: clean
-	rm -r .venv/ || true	
+	rm -fr .venv/
 
 clean: clean-docs clean-pyc
-	rm -r __pycache__/ || true
-	rm -r .mypy_cache/ || true
-	rm -r .pytest_cache/ || true
-	rm -r .tox/ || true
-	rm -r s3encrypt.egg* || true
-	rm -r htmlcov/ || true
-	rm *.log || true
-	rm -r build/ || true
-	rm -r dist/ || true
-	rm df.csv || true
-	rm -rf ~/stock_data || true
+	rm -fr __pycache__/
+	rm -fr .mypy_cache/
+	rm -fr .pytest_cache/
+	rm -fr .tox/
+	rm -fr s3encrypt.egg*
+	rm -fr htmlcov/
+	rm -fr *.log
+	rm -fr build/
+	rm -fr dist/
+	rm -fr df.csv
+	rm -fr .python-version
 	
 clean-pyc: 
-	find . -name '*.pyc' -exec rm -f {} + || true
-	find . -name '*.pyo' -exec rm -f {} + || true
-	find . -name '*~' -exec rm -f {} + || true
-	find . -name '__pycache__' -exec rm -fr {} + || true
+	find . -name '*.pyc' -exec rm -f {} +
+	find . -name '*.pyo' -exec rm -f {} +
+	find . -name '*~' -exec rm -f {} +
+	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-docs:
-	rm -f docs/s3encrypt.rst || true
-	rm -f docs/modules.rst || true
-	rm -fr docs/_build || true
+	rm -f docs/s3encrypt.rst
+	rm -f docs/modules.rst
+	rm -fr docs/_build
 
 docs-html: clean-docs
 	sphinx-apidoc -o docs/ s3encrypt
@@ -133,5 +133,9 @@ install-setup:
 	python setup.py install 
 
 uninstall-setup:
-	rm .venv/lib/python3.8/site-packages/s3encrypt-version_0.0.1_-py3.8.egg || true
-	rm .venv/bin/s3encrypt || true
+	rm -fr .venv/lib/python3.8/site-packages/s3encrypt-version_0.0.1_-py3.8.egg
+	rm -fr .venv/bin/s3encrypt
+
+python-3.7:
+	pyenv local 3.7.0
+	python --version

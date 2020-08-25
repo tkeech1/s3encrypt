@@ -7,8 +7,7 @@ legacy_tox_ini = """
 [tox]
 # envlist = py37,py38
 # py37 not working with asyncio
-envlist = py38,py37
-
+envlist = py38
 
 [testenv]
 deps = pytest >= 5.0.0
