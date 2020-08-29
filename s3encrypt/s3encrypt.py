@@ -183,7 +183,7 @@ async def s3encrypt_async(
     force: bool,
     timeout: int,
 ) -> typing.Dict[str, str]:
-    """ Async entry point to compress, encrypt and store directories to S3
+    """Async entry point to compress, encrypt and store directories to S3
 
     Args:
             directories (List[str]): directories
