@@ -4,13 +4,13 @@ from concurrent.futures import ThreadPoolExecutor
 import asyncio
 import os
 import zipfile
-import tempfile
 import hashlib
 import boto3
 import botocore
 from s3encrypt.encryption.aws_encryption import AWSEncryptionServiceBuilder
 from s3encrypt.encryption.base_encryption import EncryptionFactory
 from s3encrypt.decorator import log_start_stop_time, async_log_start_stop_time
+from s3encrypt.temp_file import TempFile
 
 logger = logging.getLogger(__name__)
 
@@ -30,78 +30,74 @@ def compress_encrypt_store(
         return {}
 
     try:
+
         # create a tmpfile for the compressed file
-        _, compressed_file_path = tempfile.mkstemp()
-        logger.debug(
-            f"Created tmp file {compressed_file_path} for compressed "
-            + "archive of {directory}"
-        )
-        # create a tmpfile for the encrypted compressed file
-        _, encrypted_file_path = tempfile.mkstemp()
-        logger.debug(
-            f"Created tmp file {encrypted_file_path} for encrypted "
-            + f"compressed archive of {directory}"
-        )
+        with TempFile() as compressed_file:
+            compressed_file_path = compressed_file.temp_file_path
+            # _, compressed_file_path = tempfile.mkstemp()
+            logger.debug(
+                f"Created tmp file {compressed_file_path} for compressed "
+                + "archive of {directory}"
+            )
 
-        logger.debug(
-            f"Starting to create compressed file for {directory}"
-            + f" at {compressed_file_path}"
-        )
-        compress_directory(directory, compressed_file_path)
-        logger.debug(
-            f"Finished creating compressed file for {directory}"
-            + f" at {compressed_file_path}"
-        )
+            # create a tmpfile for the encrypted compressed file
+            with TempFile() as encrypted_file:
+                encrypted_file_path = encrypted_file.temp_file_path
+                # _, encrypted_file_path = tempfile.mkstemp()
+                logger.debug(
+                    f"Created tmp file {encrypted_file_path} for encrypted "
+                    + f"compressed archive of {directory}"
+                )
+                logger.debug(
+                    f"Starting to create compressed file for {directory}"
+                    + f" at {compressed_file_path}"
+                )
+                compress_directory(directory, compressed_file_path)
+                logger.debug(
+                    f"Finished creating compressed file for {directory}"
+                    + f" at {compressed_file_path}"
+                )
 
-        logger.debug(
-            f"Starting to create encrypted file for {directory} at "
-            + f"{encrypted_file_path}"
-        )
+                logger.debug(
+                    f"Starting to create encrypted file for {directory} at "
+                    + f"{encrypted_file_path}"
+                )
 
-        key_bytes = hashlib.sha256(bytes(password, "utf-8")).digest()
+                key_bytes = hashlib.sha256(bytes(password, "utf-8")).digest()
 
-        config: typing.Dict[str, typing.Any] = {
-            "key_bytes": key_bytes,
-            "input_file_path": compressed_file_path,
-            "output_file_path": encrypted_file_path,
-        }
-        # object factory
-        encryption = encryption_factory.create(key="aws-local", **config)
+                config: typing.Dict[str, typing.Any] = {
+                    "key_bytes": key_bytes,
+                    "input_file_path": compressed_file_path,
+                    "output_file_path": encrypted_file_path,
+                }
+                # object factory
+                encryption = encryption_factory.create(key="aws-local", **config)
+                encryption.encrypt_file()
+                logger.info(
+                    f"Finished creating encrypted file "
+                    f"for {directory} at {encrypted_file_path}"
+                )
 
-        encryption.encrypt_file()
-        logger.info(
-            f"Finished creating encrypted file for {directory} at {encrypted_file_path}"
-        )
+                logger.debug(
+                    f"Starting S3 upload of compressed/encrypted "
+                    f"{directory} to {s3_bucket}",
+                )
+                s3_url = store_to_s3(
+                    encrypted_file_path,
+                    s3_bucket,
+                    f"{os.path.basename(directory)}.zip.enc",
+                )
+                logger.info(
+                    f"Finished S3 upload of compressed/encrypted "
+                    f"{directory} to {s3_bucket}",
+                )
 
-        logger.debug(
-            f"Starting S3 upload of compressed/encrypted {directory} to {s3_bucket}"
-        )
-        s3_url = store_to_s3(
-            encrypted_file_path, s3_bucket, f"{os.path.basename(directory)}.zip.enc",
-        )
-        logger.info(
-            f"Finished S3 upload of compressed/encrypted {directory} to {s3_bucket}"
-        )
         return {directory: s3_url}
+
     except Exception as e:
         logger.error(e)
         logger.error(f"Args: directory={directory}, s3_bucket={s3_bucket}")
         raise S3EncryptError(" s3encrypt encountered an error ", e)
-    finally:
-        try:
-            # remove the tmpfile
-            os.remove(compressed_file_path)
-            logger.debug(
-                f"Removed tmp file for compressed archive: {compressed_file_path}"
-            )
-            os.remove(encrypted_file_path)
-            logger.debug(
-                "Removed tmp file for encrypted compressed archive: ",
-                f"{encrypted_file_path}",
-            )
-        except Exception as e:
-            logger.debug(f"An exception occurred removing a tmp file: {e}")
-            raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
 @log_start_stop_time

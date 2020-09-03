@@ -78,7 +78,7 @@ def test_store_to_s3(mock_boto3_session: mock.Mock) -> None:
 
 
 @mock.patch("s3encrypt.s3encrypt.os.remove")
-@mock.patch("s3encrypt.s3encrypt.tempfile")
+@mock.patch("s3encrypt.temp_file.tempfile") 
 @mock.patch("s3encrypt.s3encrypt.validate_directory")
 @mock.patch("s3encrypt.s3encrypt.compress_directory")
 @mock.patch("s3encrypt.s3encrypt.EncryptionFactory.create")
