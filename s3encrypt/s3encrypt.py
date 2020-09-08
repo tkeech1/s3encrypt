@@ -22,6 +22,21 @@ encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
 def compress_encrypt_store(
     directory: str, password: str, s3_bucket: str, force: bool
 ) -> typing.Dict[str, str]:
+"""Compresses, encrypts and stores a directory to S3
+
+    Args:
+            directory (str): the directory to compress, ecnrypt and strore
+
+            password (str): the password used to generate the encryption key
+
+            s3_bucket (str): the S3 bucket for upload
+
+            force (bool): forces existing files to be overwritten in S3
+
+    Returns:
+            Dict[str, str]: A dictionary of directory -> S3 object
+
+    """
 
     try:
         directory = validate_directory(directory)
