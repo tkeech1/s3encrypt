@@ -44,8 +44,6 @@ def test_main(
         "cmd",
         "--log-level",
         "INFO",
-        "--mode",
-        "watch",
         "--directories",
         "/test",
         "/test",
@@ -58,8 +56,7 @@ def test_main(
         "--password",
         "pass",
     ]
-    main()
-    mock_logger.info.assert_called_with("Maximum number of watched directories is 5")
+    assert main() == 1
 
     # adds two watchers
     mock_sys.argv = [

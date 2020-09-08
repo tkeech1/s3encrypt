@@ -1,9 +1,9 @@
 """
 
-This module zips, encrypts and saves the encrypted file to an S3 bucket.
+This module zips, encrypts and saves one or more directories to an S3 bucket.
 
 Example:
-    $ python -m s3encrypt store --directories test test2 test3
+    $ python -m s3encrypt --directories test test2 test3
         --s3_bucket MYBUCKET --password 12345
 
 Attributes:
@@ -115,14 +115,14 @@ def main() -> int:
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
+    directory_limit = 5
+    if len(args.directories) > directory_limit:
+        logger.info(f"Maximum number of directories is {directory_limit}")
+        return 1
+
     if args.mode == "watch":
         # watch mode
         logger.debug("Starting in WATCH mode")
-        process_limit = 5
-        if len(args.directories) > process_limit:
-            logger.info(f"Maximum number of watched directories is {process_limit}")
-            return 1
-
         watcher = DirectoryWatcher()
         for directory in args.directories:
             try:

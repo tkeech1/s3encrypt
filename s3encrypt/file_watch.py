@@ -21,26 +21,22 @@ class DirectoryWatcher(object):
         self.__event_observer = Observer()
 
     def run(self) -> None:
-        self.start()
+        self.__start()
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            self.stop()
+            self.__stop()
 
-    def start(self) -> None:
+    def __start(self) -> None:
         self.__event_observer.start()
 
-    def stop(self) -> None:
+    def __stop(self) -> None:
         self.__event_observer.stop()
         self.__event_observer.join()
 
     def add_watched_directory(
-        self,
-        src_path: str,
-        password: str,
-        s3_bucket: str,
-        force: bool,
+        self, src_path: str, password: str, s3_bucket: str, force: bool,
     ) -> None:
         event_handler = DirectoryChangeEventHandler(
             src_path, password, s3_bucket, force
@@ -48,20 +44,14 @@ class DirectoryWatcher(object):
         self.__schedule(event_handler, src_path)
 
     def __schedule(
-        self,
-        event_handler: DirectoryChangeEventHandler,
-        src_path: str,
+        self, event_handler: DirectoryChangeEventHandler, src_path: str,
     ) -> None:
         self.__event_observer.schedule(event_handler, src_path, recursive=True)
 
 
 class DirectoryChangeEventHandler(FileSystemEventHandler):  # type: ignore
     def __init__(
-        self,
-        src_path: str,
-        password: str,
-        s3_bucket: str,
-        force: bool,
+        self, src_path: str, password: str, s3_bucket: str, force: bool,
     ) -> None:
         self.__src_path = src_path
         self.__password = password
@@ -88,8 +78,5 @@ class DirectoryChangeEventHandler(FileSystemEventHandler):  # type: ignore
 
         logger.debug(f"Filesystem event: {event}")
         compress_encrypt_store(
-            self.__src_path,
-            self.__password,
-            self.__s3_bucket,
-            self.__force,
+            self.__src_path, self.__password, self.__s3_bucket, self.__force,
         )
