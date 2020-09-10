@@ -78,7 +78,7 @@ def test_store_to_s3(mock_boto3_session: mock.Mock) -> None:
 
 
 @mock.patch("s3encrypt.s3encrypt.os.remove")
-@mock.patch("s3encrypt.temp_file.tempfile") 
+@mock.patch("s3encrypt.temp_file.tempfile")
 @mock.patch("s3encrypt.s3encrypt.validate_directory")
 @mock.patch("s3encrypt.s3encrypt.compress_directory")
 @mock.patch("s3encrypt.s3encrypt.EncryptionFactory.create")
@@ -133,10 +133,16 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
     s3_bucket = "s3_bucket"
     force = True
     timeout = 30
+    thread_pool_limit = 5
 
     # test empty director list
     assert (
-        await (s3encrypt_async(directories, password, s3_bucket, force, timeout)) == {}
+        await (
+            s3encrypt_async(
+                directories, password, s3_bucket, force, timeout, thread_pool_limit
+            )
+        )
+        == {}
     )
 
     directories = ["somedir", "somedir2"]
@@ -144,7 +150,12 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
 
     # test empty password
     assert (
-        await (s3encrypt_async(directories, password, s3_bucket, force, timeout)) == {}
+        await (
+            s3encrypt_async(
+                directories, password, s3_bucket, force, timeout, thread_pool_limit
+            )
+        )
+        == {}
     )
 
     password = "pass"
@@ -153,7 +164,11 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
         {"file1": "url1"},
         {"file2": "url2"},
     ]
-    result = await (s3encrypt_async(directories, password, s3_bucket, force, timeout))
+    result = await (
+        s3encrypt_async(
+            directories, password, s3_bucket, force, timeout, thread_pool_limit
+        )
+    )
     assert len(result) == 2
     assert result["file1"] == "url1"
     assert result["file2"] == "url2"
@@ -161,4 +176,6 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
     # error in s3encrypt_async
     with pytest.raises(S3EncryptError):
         mock_compress_encrypt_store.side_effect = Exception("exception")
-        await s3encrypt_async(directories, password, s3_bucket, force, timeout)
+        await s3encrypt_async(
+            directories, password, s3_bucket, force, timeout, thread_pool_limit
+        )

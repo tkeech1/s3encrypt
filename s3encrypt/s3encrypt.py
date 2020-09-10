@@ -193,6 +193,7 @@ async def s3encrypt_async(
     s3_bucket: str,
     force: bool,
     timeout: int,
+    thread_pool_limit: int,
 ) -> typing.Dict[str, str]:
     """Async entry point to compress, encrypt and store directories to S3
 
@@ -212,7 +213,7 @@ async def s3encrypt_async(
 
     """
 
-    if len(directories) == 0 or not password:
+    if len(directories) == 0 or len(directories) > thread_pool_limit or not password:
         return {}
 
     final_dict: typing.Dict[str, str] = {}
@@ -224,7 +225,8 @@ async def s3encrypt_async(
 
         # uses a pool of worker threads to execute calls asynchronously
         # each in a separate thread
-        with ThreadPoolExecutor() as executor:
+        # calls to compress_encrypt_store are blocking
+        with ThreadPoolExecutor(max_workers=thread_pool_limit) as executor:
             for directory in directories:
                 blocking_tasks.append(
                     loop.run_in_executor(

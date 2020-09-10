@@ -146,6 +146,7 @@ def main() -> int:
                 s3_bucket=args.s3_bucket,
                 force=args.force,
                 timeout=40,
+                thread_pool_limit=directory_limit,
             )
         )
 
