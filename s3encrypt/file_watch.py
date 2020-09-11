@@ -36,11 +36,9 @@ class DirectoryWatcher(object):
         self.__event_observer.join()
 
     def add_watched_directory(
-        self, src_path: str, password: str, s3_bucket: str, force: bool,
+        self, src_path: str, password: str, s3_bucket: str
     ) -> None:
-        event_handler = DirectoryChangeEventHandler(
-            src_path, password, s3_bucket, force
-        )
+        event_handler = DirectoryChangeEventHandler(src_path, password, s3_bucket)
         self.__schedule(event_handler, src_path)
 
     def __schedule(
@@ -50,13 +48,10 @@ class DirectoryWatcher(object):
 
 
 class DirectoryChangeEventHandler(FileSystemEventHandler):  # type: ignore
-    def __init__(
-        self, src_path: str, password: str, s3_bucket: str, force: bool,
-    ) -> None:
+    def __init__(self, src_path: str, password: str, s3_bucket: str) -> None:
         self.__src_path = src_path
         self.__password = password
         self.__s3_bucket = s3_bucket
-        self.__force = force
         super().__init__()
 
     def on_any_event(self: DirectoryChangeEventHandler, event: FileSystemEvent) -> None:
@@ -77,6 +72,4 @@ class DirectoryChangeEventHandler(FileSystemEventHandler):  # type: ignore
                 time.sleep(1)
 
         logger.debug(f"Filesystem event: {event}")
-        compress_encrypt_store(
-            self.__src_path, self.__password, self.__s3_bucket, self.__force,
-        )
+        compress_encrypt_store(self.__src_path, self.__password, self.__s3_bucket)

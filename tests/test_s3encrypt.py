@@ -96,14 +96,13 @@ def test_compress_encrypt_store(
     directory = "/dir"
     password = "pass"
     s3bucket = "s3bucket"
-    force = True
 
     mock_tempfile.mkstemp.return_value = ("", "some_file")
     mock_validate_directory.return_value = directory
     mock_os_remove.return_value = None
     mock_encrypt_file = mock.Mock()
     mock_EncryptionFactory.return_value = mock_encrypt_file
-    compress_encrypt_store(directory, password, s3bucket, force)
+    compress_encrypt_store(directory, password, s3bucket)
     mock_validate_directory.assert_called_once_with(directory)
     mock_compress_directory.assert_called_once_with(directory, "some_file")
     mock_encrypt_file.encrypt_file.assert_called_once_with()
@@ -112,16 +111,16 @@ def test_compress_encrypt_store(
     # error removing tmp file
     mock_os_remove.side_effect = Exception("exception")
     with pytest.raises(S3EncryptError):
-        compress_encrypt_store(directory, password, s3bucket, force)
+        compress_encrypt_store(directory, password, s3bucket)
 
     # error in encryption/upload
     mock_compress_directory.side_effect = Exception("exception")
     with pytest.raises(S3EncryptError):
-        compress_encrypt_store(directory, password, s3bucket, force)
+        compress_encrypt_store(directory, password, s3bucket)
 
     # invalid directory
     mock_validate_directory.side_effect = S3EncryptError("", Exception("exception"))
-    assert compress_encrypt_store("", "", "", True) == {}
+    assert compress_encrypt_store("", "", "") == {}
     mock_validate_directory.reset_mock()
 
 
@@ -131,32 +130,15 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
     directories: typing.List[str] = []
     password = "pass"
     s3_bucket = "s3_bucket"
-    force = True
-    timeout = 30
-    thread_pool_limit = 5
 
     # test empty director list
-    assert (
-        await (
-            s3encrypt_async(
-                directories, password, s3_bucket, force, timeout, thread_pool_limit
-            )
-        )
-        == {}
-    )
+    assert await (s3encrypt_async(directories, password, s3_bucket)) == {}
 
     directories = ["somedir", "somedir2"]
     password = ""
 
     # test empty password
-    assert (
-        await (
-            s3encrypt_async(
-                directories, password, s3_bucket, force, timeout, thread_pool_limit
-            )
-        )
-        == {}
-    )
+    assert await (s3encrypt_async(directories, password, s3_bucket)) == {}
 
     password = "pass"
     # return a different value for each call to the mock
@@ -164,11 +146,7 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
         {"file1": "url1"},
         {"file2": "url2"},
     ]
-    result = await (
-        s3encrypt_async(
-            directories, password, s3_bucket, force, timeout, thread_pool_limit
-        )
-    )
+    result = await (s3encrypt_async(directories, password, s3_bucket))
     assert len(result) == 2
     assert result["file1"] == "url1"
     assert result["file2"] == "url2"
@@ -176,6 +154,4 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
     # error in s3encrypt_async
     with pytest.raises(S3EncryptError):
         mock_compress_encrypt_store.side_effect = Exception("exception")
-        await s3encrypt_async(
-            directories, password, s3_bucket, force, timeout, thread_pool_limit
-        )
+        await s3encrypt_async(directories, password, s3_bucket)

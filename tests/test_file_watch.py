@@ -19,7 +19,7 @@ def test_DirectoryWatcher(
     dir_chg_mock = mock.Mock()
     mock_dir_chg_evt.return_value = dir_chg_mock
     dir_watcher: DirectoryWatcher = DirectoryWatcher()
-    dir_watcher.add_watched_directory("/a_test", "password", "bucket", True)
+    dir_watcher.add_watched_directory("/a_test", "password", "bucket")
 
     mock_event_observer.schedule.assert_called_once_with(
         dir_chg_mock, "/a_test", recursive=True
@@ -40,11 +40,11 @@ def test_DirectoryChangeEventHandler(
 ) -> None:
     mock_getsize.return_value = 1
     dir_chg_handler: DirectoryChangeEventHandler = DirectoryChangeEventHandler(
-        src_path="/a_test", password="password", s3_bucket="bucket", force=True
+        src_path="/a_test", password="password", s3_bucket="bucket"
     )
     dir_chg_handler.on_any_event(FileCreatedEvent("/a_test"))
     dir_chg_handler.on_any_event(FileDeletedEvent("/a_test"))
     dir_chg_handler.on_any_event(FileModifiedEvent("/a_test"))
 
-    calls = [call("/a_test", "password", "bucket", True)] * 3
+    calls = [call("/a_test", "password", "bucket")] * 3
     mock_ces.assert_has_calls(calls)

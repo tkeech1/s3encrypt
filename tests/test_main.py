@@ -76,7 +76,7 @@ def test_main(
     mock_validate_dir.side_effect = ["/test", "/test2"]
     main()
     watcher_mock.add_watched_directory.assert_has_calls(
-        [call("/test", "pass", "test", False), call("/test2", "pass", "test", False)]
+        [call("/test", "pass", "test"), call("/test2", "pass", "test")]
     )
 
     # adds no watchers

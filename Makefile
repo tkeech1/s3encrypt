@@ -7,10 +7,10 @@ AWS_REGION?=AWS_REGION
 
 # run as a module
 run-module: format lint test	
-	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --password 12345 --force 
+	python -m s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --password 12345
 
 run-module-watch: format lint test	
-	python -m s3encrypt --log-level INFO --mode watch --directories testfiles/testzip testfiles/testzipsdsd2 --s3_bucket tdk-bd-keep.io --password 12345 --force 
+	python -m s3encrypt --log-level INFO --mode watch --directories testfiles/testzip testfiles/testzipsdsd2 --s3_bucket tdk-bd-keep.io --password 12345
 
 run-profile:	
 	python -m cProfile -s time -o profile.cprof runner.py
@@ -115,10 +115,10 @@ run-wheel: # must be done after installing the wheel
 	# run directly from the wheel file
 	# python dist/s3encrypt-version_0.0.1_-py3-none-any.whl/s3encrypt
 	# or use the module
-	cd ~ && python -m s3encrypt --log-level INFO --directories /workspaces/s3encrypt/testfiles/testzip /workspaces/s3encrypt/testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
+	cd ~ && python -m s3encrypt --log-level INFO --directories /workspaces/s3encrypt/testfiles/testzip /workspaces/s3encrypt/testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt
 
 run-entry-point: 
-	.venv/bin/s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt --force 
+	.venv/bin/s3encrypt --log-level INFO --directories testfiles/testzip testfiles/testzip2 --s3_bucket tdk-bd-keep.io --key 12345 --salt testsalt
 
 build-sdist: clean
 	python setup.py sdist

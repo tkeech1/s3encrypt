@@ -47,7 +47,7 @@ def e2e():
         # compress, encrypt and store in S3
         write_file(test_file_content, tmp_file_path)
         logger.info(f"Created tmp file")
-        compress_encrypt_store(tmp_dir_path, key, bucket, True)
+        compress_encrypt_store(tmp_dir_path, key, bucket)
         logger.info(f"Compressed, encrypted and uploaded to {bucket}")
 
         # verify the file

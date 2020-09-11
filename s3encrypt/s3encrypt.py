@@ -20,7 +20,7 @@ encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
 
 @log_start_stop_time
 def compress_encrypt_store(
-    directory: str, password: str, s3_bucket: str, force: bool
+    directory: str, password: str, s3_bucket: str
 ) -> typing.Dict[str, str]:
     """Compresses, encrypts and stores a directory to S3
 
@@ -30,8 +30,6 @@ def compress_encrypt_store(
             password (str): the password used to generate the encryption key
 
             s3_bucket (str): the S3 bucket for upload
-
-            force (bool): forces existing files to be overwritten in S3
 
     Returns:
             Dict[str, str]: A dictionary of directory -> S3 object
@@ -191,9 +189,7 @@ async def s3encrypt_async(
     directories: typing.List[str],
     password: str,
     s3_bucket: str,
-    force: bool,
-    timeout: int,
-    thread_pool_limit: int,
+    thread_pool_limit: int = 5,
 ) -> typing.Dict[str, str]:
     """Async entry point to compress, encrypt and store directories to S3
 
@@ -203,8 +199,6 @@ async def s3encrypt_async(
             password (str): the password used to generate the encryption key
 
             s3_bucket (str): the S3 bucket for upload
-
-            force (bool): forces existing files to be overwritten in S3
 
             timeout (int): the timeout (seconds) for S3 uploads
 
@@ -235,7 +229,6 @@ async def s3encrypt_async(
                         directory,
                         password,
                         s3_bucket,
-                        force,
                     )
                 )
             results = await asyncio.gather(*blocking_tasks, return_exceptions=True)

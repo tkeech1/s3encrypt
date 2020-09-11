@@ -73,15 +73,15 @@ def get_args() -> argparse.Namespace:
         help="the password used to generate the encryption key",
         required=True,
     )
-    parser.add_argument(
-        "--force",
-        type=bool,
-        action="store",
-        help="force existing files to be overwritten",
-        nargs="?",
-        const=True,
-        default=False,
-    )
+    # parser.add_argument(
+    #    "--force",
+    #    type=bool,
+    #    action="store",
+    #    help="force existing files to be overwritten",
+    #    nargs="?",
+    #    const=True,
+    #    default=False,
+    # )
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -131,9 +131,7 @@ def main() -> int:
                 logger.info(f"{directory} is not a valid directory. Skipping.")
                 continue
             logger.debug(f"Starting watch for {directory}")
-            watcher.add_watched_directory(
-                directory, args.password, args.s3_bucket, args.force
-            )
+            watcher.add_watched_directory(directory, args.password, args.s3_bucket)
             logger.debug(f"Started watch for {directory}")
         watcher.run()
     else:
@@ -144,9 +142,6 @@ def main() -> int:
                 directories=args.directories,
                 password=args.password,
                 s3_bucket=args.s3_bucket,
-                force=args.force,
-                timeout=40,
-                thread_pool_limit=directory_limit,
             )
         )
 
