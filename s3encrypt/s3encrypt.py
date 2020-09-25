@@ -210,8 +210,6 @@ async def s3encrypt_async(
     if len(directories) == 0 or len(directories) > thread_pool_limit or not password:
         return {}
 
-    final_dict: typing.Dict[str, str] = {}
-
     try:
 
         loop = asyncio.get_event_loop()
@@ -233,16 +231,12 @@ async def s3encrypt_async(
                 )
             results = await asyncio.gather(*blocking_tasks, return_exceptions=True)
 
-        for r in results:
-            for k, v in r.items():
-                final_dict[k] = v
+        return {k: v for r in results for k, v in r.items()}
 
     except Exception as e:
         logger.error(e)
         logger.error(f"Args: directories={directories}, s3_bucket={s3_bucket}")
         raise S3EncryptError(" s3encrypt encountered an error ", e)
-
-    return final_dict
 
 
 class S3EncryptError(Exception):
