@@ -190,6 +190,7 @@ async def s3encrypt_async(
     password: str,
     s3_bucket: str,
     thread_pool_limit: int = 5,
+    timeout: int = 60,
 ) -> typing.Dict[str, str]:
     """Async entry point to compress, encrypt and store directories to S3
 
@@ -229,9 +230,33 @@ async def s3encrypt_async(
                         s3_bucket,
                     )
                 )
-            results = await asyncio.gather(*blocking_tasks, return_exceptions=True)
 
-        return {k: v for r in results for k, v in r.items()}
+            done, pending = await asyncio.wait(
+                blocking_tasks, timeout=timeout, return_when=asyncio.ALL_COMPLETED
+            )
+
+            # TODO task cancellation
+            # for task in pending:
+            # try:
+            # task.cancel()
+            # await task
+            # except asyncio.CancelledError as e:
+            #    print(f"cancelling tasks and got {e}")
+
+            results_dict = {}
+            i = 0
+            for task in done | pending:
+                # try:
+                if task.exception():
+                    results_dict[f"task_{str(i)}"] = str(task.exception())
+                else:
+                    for k, v in task.result().items():
+                        results_dict[k] = v
+                # except (asyncio.CancelledError, asyncio.InvalidStateError) as e:
+                #    logger.error(e)
+                i += 1
+
+            return results_dict
 
     except Exception as e:
         logger.error(e)

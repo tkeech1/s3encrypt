@@ -12,6 +12,7 @@ from unittest import mock
 import pytest
 import botocore
 import typing
+import asyncio
 
 
 def test_validate_directory() -> None:
@@ -152,6 +153,12 @@ async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
     assert result["file2"] == "url2"
 
     # error in s3encrypt_async
-    with pytest.raises(S3EncryptError):
-        mock_compress_encrypt_store.side_effect = Exception("exception")
-        await s3encrypt_async(directories, password, s3_bucket)
+    mock_compress_encrypt_store.side_effect = Exception("exception 123")
+    res = await s3encrypt_async(directories, password, s3_bucket)
+    assert "exception 123" in res.values()
+
+    # error in s3encrypt_async
+    with mock.patch("s3encrypt.s3encrypt.asyncio") as mock_asyncio:
+        with pytest.raises(S3EncryptError):
+            mock_asyncio.get_event_loop.side_effect = Exception("exception")
+            await s3encrypt_async(directories, password, s3_bucket)
