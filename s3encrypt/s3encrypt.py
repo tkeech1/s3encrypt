@@ -1,6 +1,5 @@
 import typing
 import logging
-from concurrent.futures import ThreadPoolExecutor
 import asyncio
 import os
 import zipfile
@@ -19,8 +18,12 @@ encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
 
 
 @log_start_stop_time
-def compress_encrypt_store(
-    directory: str, password: str, s3_bucket: str
+async def compress_encrypt_store(
+    directory: str,
+    password: str,
+    s3_bucket: str,
+    loop: typing.Any,
+    executor: typing.Any,
 ) -> typing.Dict[str, str]:
     """Compresses, encrypts and stores a directory to S3
 
@@ -37,7 +40,7 @@ def compress_encrypt_store(
     """
 
     try:
-        directory = validate_directory(directory)
+        directory = await loop.run_in_executor(executor, validate_directory, directory)
     except S3EncryptError:
         logger.info(f"{directory} is not a valid directory. Skipping.")
         return {}
@@ -50,7 +53,7 @@ def compress_encrypt_store(
             # _, compressed_file_path = tempfile.mkstemp()
             logger.debug(
                 f"Created tmp file {compressed_file_path} for compressed "
-                + "archive of {directory}"
+                + f"archive of {directory}"
             )
 
             # create a tmpfile for the encrypted compressed file
@@ -65,7 +68,9 @@ def compress_encrypt_store(
                     f"Starting to create compressed file for {directory}"
                     + f" at {compressed_file_path}"
                 )
-                compress_directory(directory, compressed_file_path)
+                await loop.run_in_executor(
+                    executor, compress_directory, directory, compressed_file_path
+                )
                 logger.debug(
                     f"Finished creating compressed file for {directory}"
                     + f" at {compressed_file_path}"
@@ -85,7 +90,7 @@ def compress_encrypt_store(
                 }
                 # object factory
                 encryption = encryption_factory.create(key="aws-local", **config)
-                encryption.encrypt_file()
+                await loop.run_in_executor(executor, encryption.encrypt_file)
                 logger.info(
                     f"Finished creating encrypted file "
                     f"for {directory} at {encrypted_file_path}"
@@ -95,7 +100,9 @@ def compress_encrypt_store(
                     f"Starting S3 upload of compressed/encrypted "
                     f"{directory} to {s3_bucket}",
                 )
-                s3_url = store_to_s3(
+                s3_url = await loop.run_in_executor(
+                    executor,
+                    store_to_s3,
                     encrypted_file_path,
                     s3_bucket,
                     f"{os.path.basename(directory)}.zip.enc",
@@ -152,6 +159,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
 @log_start_stop_time
 def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str) -> str:
     try:
+
         # TODO - check for existence of the file before overwriting
         # or make the file-name unique
 
@@ -186,11 +194,14 @@ def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str) -> str:
 
 @async_log_start_stop_time
 async def s3encrypt_async(
+    shutdown_event: typing.Any,
     directories: typing.List[str],
     password: str,
     s3_bucket: str,
+    loop: typing.Any,
+    executor: typing.Any,
     thread_pool_limit: int = 5,
-    timeout: int = 60,
+    timeout: int = 500,
 ) -> typing.Dict[str, str]:
     """Async entry point to compress, encrypt and store directories to S3
 
@@ -211,52 +222,40 @@ async def s3encrypt_async(
     if len(directories) == 0 or len(directories) > thread_pool_limit or not password:
         return {}
 
+    tasks = []
+
     try:
 
-        loop = asyncio.get_event_loop()
-        blocking_tasks = []
-
-        # uses a pool of worker threads to execute calls asynchronously
-        # each in a separate thread
-        # calls to compress_encrypt_store are blocking
-        with ThreadPoolExecutor(max_workers=thread_pool_limit) as executor:
-            for directory in directories:
-                blocking_tasks.append(
-                    loop.run_in_executor(
-                        executor,
-                        compress_encrypt_store,
-                        directory,
-                        password,
-                        s3_bucket,
+        for directory in directories:
+            tasks.append(
+                asyncio.create_task(
+                    compress_encrypt_store(
+                        directory, password, s3_bucket, loop, executor
                     )
                 )
-
-            done, pending = await asyncio.wait(
-                blocking_tasks, timeout=timeout, return_when=asyncio.ALL_COMPLETED
             )
 
-            # TODO task cancellation
-            # for task in pending:
-            # try:
-            # task.cancel()
-            # await task
-            # except asyncio.CancelledError as e:
-            #    print(f"cancelling tasks and got {e}")
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
-            results_dict = {}
-            i = 0
-            for task in done | pending:
-                # try:
+        logger.debug(f"{len(done)} completed tasks")
+        logger.debug(f"{len(pending)} pending tasks")
+
+        results_dict = {}
+
+        for task in done:
+            try:
                 if task.exception():
-                    results_dict[f"task_{str(i)}"] = str(task.exception())
+                    # TODO - fix mypy issue
+                    # results_dict[f"{task.get_name()}"] = str(task.exception())
+                    results_dict["task"] = str(task.exception())
                 else:
                     for k, v in task.result().items():
                         results_dict[k] = v
-                # except (asyncio.CancelledError, asyncio.InvalidStateError) as e:
-                #    logger.error(e)
-                i += 1
+            except (asyncio.CancelledError, asyncio.InvalidStateError):
+                logger.debug("Task cancelled or invalidated")
 
-            return results_dict
+        shutdown_event.set()
+        return results_dict
 
     except Exception as e:
         logger.error(e)

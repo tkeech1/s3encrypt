@@ -17,14 +17,21 @@ Todo:
     * Documentation
 
 """
+
 import logging
 import logging.config
 import argparse
 import asyncio
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
-from s3encrypt.s3encrypt import S3EncryptError, s3encrypt_async, validate_directory
+from s3encrypt.s3encrypt import (
+    S3EncryptError,
+    s3encrypt_async,
+    validate_directory,
+)
 from s3encrypt.file_watch import DirectoryWatcher
+import s3encrypt.async_helper as async_helper
 
 logger = logging.getLogger(__package__)
 
@@ -129,13 +136,42 @@ def main() -> int:
     else:
         # store mode
         logger.debug("Starting in STORE mode")
-        asyncio.run(
-            s3encrypt_async(
-                directories=args.directories,
-                password=args.password,
-                s3_bucket=args.s3_bucket,
-            )
-        )
+
+        with ThreadPoolExecutor(max_workers=len(args.directories)) as executor:
+
+            shutdown_event = asyncio.Event()
+            loop = async_helper.get_loop(shutdown_event, executor)
+
+            try:
+                # the shutdown task waits for the shutdown_event to be set
+                # the shutdown_event can be set by:
+                # 1) successful completion of tasks
+                # 2) exception
+                # 3) OS signal (ctrl-c)
+                # 4) timeout
+                loop.create_task(async_helper.shutdown(shutdown_event, loop, executor))
+
+                # when the main task completes, shutdown_event is set
+                # #to trigger shutdown
+                loop.create_task(
+                    s3encrypt_async(
+                        shutdown_event,
+                        directories=args.directories,
+                        password=args.password,
+                        s3_bucket=args.s3_bucket,
+                        loop=loop,
+                        executor=executor,
+                    )
+                )
+
+                # when the timeout expires, shutdown_event is set to trigger shutdown
+                loop.create_task(async_helper.timeout(shutdown_event, timeout=2))
+
+                loop.run_forever()
+
+                logger.debug("Done")
+            finally:
+                loop.close()
 
     return 0
 

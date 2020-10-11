@@ -71,6 +71,9 @@ class AWSEncryptionService(FileEncryptDecrypt):
         self.__encrypt_decrypt_file("d")
 
     def encrypt_file(self) -> None:
+        # logger.info("sleeping in encrypt_file for 500...")
+        # time.sleep(500)
+        # logger.info("done sleeping")
         self.__encrypt_decrypt_file("e")
 
 
