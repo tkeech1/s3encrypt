@@ -17,7 +17,7 @@ encryption_factory = EncryptionFactory()
 encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
 
 
-@log_start_stop_time
+@async_log_start_stop_time
 async def compress_encrypt_store(
     directory: str,
     password: str,
@@ -201,7 +201,6 @@ async def s3encrypt_async(
     loop: typing.Any,
     executor: typing.Any,
     thread_pool_limit: int = 5,
-    timeout: int = 500,
 ) -> typing.Dict[str, str]:
     """Async entry point to compress, encrypt and store directories to S3
 

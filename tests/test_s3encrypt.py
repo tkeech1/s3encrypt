@@ -1,4 +1,5 @@
 """ Tests for s3encrypt """
+from unittest.mock import AsyncMock
 from s3encrypt.s3encrypt import (
     S3EncryptError,
     validate_directory,
@@ -7,12 +8,15 @@ from s3encrypt.s3encrypt import (
     compress_encrypt_store,
     s3encrypt_async,
 )
+from concurrent.futures import ThreadPoolExecutor
 
 from unittest import mock
 import pytest
 import botocore
 import typing
 import asyncio
+import inspect
+import s3encrypt.async_helper as async_helper
 
 
 def test_validate_directory() -> None:
@@ -126,34 +130,96 @@ def test_compress_encrypt_store(
     mock_validate_directory.reset_mock()
 """
 
-"""
+
+@pytest.fixture
+def executor():
+    return ThreadPoolExecutor()
+
+
+@pytest.fixture
+def shutdown_event():
+    return asyncio.Event()
+
+
+@pytest.fixture
+def custom_event_loop(executor, shutdown_event):
+    return async_helper.get_loop(shutdown_event, executor)
+
+
+# don't use the pytest.asyncio default "event_loop" fixture
+# Use the customized event loop "custom_event_loop"
 @pytest.mark.asyncio
 @mock.patch("s3encrypt.s3encrypt.compress_encrypt_store")
-async def test_s3encrypt_async(mock_compress_encrypt_store: mock.Mock) -> None:
+async def test_s3encrypt_async(
+    mock_compress_encrypt_store, executor, shutdown_event, custom_event_loop,
+) -> None:
+
+    assert True == inspect.isawaitable(mock_compress_encrypt_store())
+    assert True == asyncio.iscoroutinefunction(mock_compress_encrypt_store)
+
     directories: typing.List[str] = []
     password = "pass"
     s3_bucket = "s3_bucket"
 
     # test empty director list
-    assert await (s3encrypt_async(directories, password, s3_bucket)) == {}
+    assert (
+        await (
+            s3encrypt_async(
+                shutdown_event,
+                directories,
+                password,
+                s3_bucket,
+                custom_event_loop,
+                executor,
+            )
+        )
+        == {}
+    )
 
     directories = ["somedir", "somedir2"]
     password = ""
 
     # test empty password
-    assert await (s3encrypt_async(directories, password, s3_bucket)) == {}
+    assert (
+        await (
+            s3encrypt_async(
+                shutdown_event,
+                directories,
+                password,
+                s3_bucket,
+                custom_event_loop,
+                executor,
+            )
+        )
+        == {}
+    )
 
     password = "pass"
     # return a different value for each call to the mock
+    # mock_compress_encrypt_store = mock.AsyncMock()
     mock_compress_encrypt_store.side_effect = [
         {"file1": "url1"},
         {"file2": "url2"},
     ]
-    result = await (s3encrypt_async(directories, password, s3_bucket))
+
+    result = await (
+        s3encrypt_async(
+            shutdown_event,
+            directories,
+            password,
+            s3_bucket,
+            custom_event_loop,
+            executor,
+        )
+    )
+
     assert len(result) == 2
+    assert mock_compress_encrypt_store.await_count == 2
     assert result["file1"] == "url1"
     assert result["file2"] == "url2"
 
+
+"""
     # error in s3encrypt_async
     mock_compress_encrypt_store.side_effect = Exception("exception 123")
     res = await s3encrypt_async(directories, password, s3_bucket)
