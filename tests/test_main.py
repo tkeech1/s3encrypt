@@ -7,6 +7,7 @@ from s3encrypt.__main__ import main
 from s3encrypt.s3encrypt import S3EncryptError
 
 
+@pytest.mark.asyncio
 @mock.patch("s3encrypt.__main__.DirectoryWatcher")
 @mock.patch("s3encrypt.__main__.sys")
 @mock.patch("s3encrypt.__main__.s3encrypt_async")
@@ -58,6 +59,20 @@ def test_main(
     ]
     assert main() == 1
 
+
+@pytest.mark.asyncio
+@mock.patch("s3encrypt.__main__.DirectoryWatcher")
+@mock.patch("s3encrypt.__main__.sys")
+@mock.patch("s3encrypt.__main__.s3encrypt_async")
+@mock.patch("s3encrypt.__main__.validate_directory")
+@mock.patch("s3encrypt.__main__.logger")
+def test_main_watcher(
+    mock_logger: mock.Mock,
+    mock_validate_dir: mock.Mock,
+    mock_s3encrypt: mock.Mock,
+    mock_sys: mock.Mock,
+    mock_directory_watcher: mock.Mock,
+) -> None:
     # adds two watchers
     mock_sys.argv = [
         "cmd",
@@ -79,7 +94,34 @@ def test_main(
         [call("/test", "pass", "test"), call("/test2", "pass", "test")]
     )
 
-    # adds no watchers
+
+@pytest.mark.asyncio
+@mock.patch("s3encrypt.__main__.DirectoryWatcher")
+@mock.patch("s3encrypt.__main__.sys")
+@mock.patch("s3encrypt.__main__.s3encrypt_async")
+@mock.patch("s3encrypt.__main__.validate_directory")
+@mock.patch("s3encrypt.__main__.logger")
+def test_main_invalid_directory(
+    mock_logger: mock.Mock,
+    mock_validate_dir: mock.Mock,
+    mock_s3encrypt: mock.Mock,
+    mock_sys: mock.Mock,
+    mock_directory_watcher: mock.Mock,
+) -> None:
+    # adds two watchers
+    mock_sys.argv = [
+        "cmd",
+        "--mode",
+        "watch",
+        "--directories",
+        "/test",
+        "--s3_bucket",
+        "test",
+        "--password",
+        "pass",
+    ]
+    watcher_mock = mock.Mock()
+    mock_directory_watcher.return_value = watcher_mock
     mock_validate_dir.side_effect = S3EncryptError("exception")
     main()
     watcher_mock.asset_has_calls([])

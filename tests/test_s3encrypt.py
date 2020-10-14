@@ -18,6 +18,8 @@ import asyncio
 import inspect
 import s3encrypt.async_helper as async_helper
 
+# TODO - add tests for timeouts, exceptions
+
 
 def test_validate_directory() -> None:
     with mock.patch("s3encrypt.s3encrypt.os") as mock_os:
@@ -82,55 +84,6 @@ def test_store_to_s3(mock_boto3_session: mock.Mock) -> None:
         assert isinstance(exception_info.value, S3EncryptError)
 
 
-"""
-@mock.patch("s3encrypt.s3encrypt.os.remove")
-@mock.patch("s3encrypt.temp_file.tempfile")
-@mock.patch("s3encrypt.s3encrypt.validate_directory")
-@mock.patch("s3encrypt.s3encrypt.compress_directory")
-@mock.patch("s3encrypt.s3encrypt.EncryptionFactory.create")
-@mock.patch("s3encrypt.s3encrypt.store_to_s3")
-def test_compress_encrypt_store(
-    mock_store_to_s3: mock.Mock,
-    mock_EncryptionFactory: mock.Mock,
-    mock_compress_directory: mock.Mock,
-    mock_validate_directory: mock.Mock,
-    mock_tempfile: mock.Mock,
-    mock_os_remove: mock.Mock,
-) -> None:
-
-    # happy path
-    directory = "/dir"
-    password = "pass"
-    s3bucket = "s3bucket"
-
-    mock_tempfile.mkstemp.return_value = ("", "some_file")
-    mock_validate_directory.return_value = directory
-    mock_os_remove.return_value = None
-    mock_encrypt_file = mock.Mock()
-    mock_EncryptionFactory.return_value = mock_encrypt_file
-    compress_encrypt_store(directory, password, s3bucket)
-    mock_validate_directory.assert_called_once_with(directory)
-    mock_compress_directory.assert_called_once_with(directory, "some_file")
-    mock_encrypt_file.encrypt_file.assert_called_once_with()
-    mock_store_to_s3.assert_called_once_with("some_file", s3bucket, "dir.zip.enc")
-
-    # error removing tmp file
-    mock_os_remove.side_effect = Exception("exception")
-    with pytest.raises(S3EncryptError):
-        compress_encrypt_store(directory, password, s3bucket)
-
-    # error in encryption/upload
-    mock_compress_directory.side_effect = Exception("exception")
-    with pytest.raises(S3EncryptError):
-        compress_encrypt_store(directory, password, s3bucket)
-
-    # invalid directory
-    mock_validate_directory.side_effect = S3EncryptError("", Exception("exception"))
-    assert compress_encrypt_store("", "", "") == {}
-    mock_validate_directory.reset_mock()
-"""
-
-
 @pytest.fixture
 def executor():
     return ThreadPoolExecutor()
@@ -146,6 +99,64 @@ def custom_event_loop(executor, shutdown_event):
     return async_helper.get_loop(shutdown_event, executor)
 
 
+@pytest.mark.asyncio
+@mock.patch("s3encrypt.s3encrypt.os.remove")
+@mock.patch("s3encrypt.temp_file.tempfile")
+@mock.patch("s3encrypt.s3encrypt.validate_directory")
+@mock.patch("s3encrypt.s3encrypt.compress_directory")
+@mock.patch("s3encrypt.s3encrypt.EncryptionFactory.create")
+@mock.patch("s3encrypt.s3encrypt.store_to_s3")
+async def test_compress_encrypt_store(
+    mock_store_to_s3: mock.Mock,
+    mock_EncryptionFactory: mock.Mock,
+    mock_compress_directory: mock.Mock,
+    mock_validate_directory: mock.Mock,
+    mock_tempfile: mock.Mock,
+    mock_os_remove: mock.Mock,
+    executor,
+    custom_event_loop,
+    shutdown_event,
+) -> None:
+
+    # happy path
+    directory = "/dir"
+    password = "pass"
+    s3bucket = "s3bucket"
+
+    mock_tempfile.mkstemp.return_value = ("", "some_file")
+    mock_validate_directory.return_value = directory
+    mock_os_remove.return_value = None
+    mock_encrypt_file = mock.Mock()
+    mock_EncryptionFactory.return_value = mock_encrypt_file
+    await compress_encrypt_store(
+        directory, password, s3bucket, custom_event_loop, executor
+    )
+
+    mock_validate_directory.assert_called_once_with(directory)
+    mock_compress_directory.assert_called_once_with(directory, "some_file")
+    mock_encrypt_file.encrypt_file.assert_called_once_with()
+    mock_store_to_s3.assert_called_once_with("some_file", s3bucket, "dir.zip.enc")
+
+    # error removing tmp file
+    mock_os_remove.side_effect = Exception("exception")
+    with pytest.raises(S3EncryptError):
+        await compress_encrypt_store(
+            directory, password, s3bucket, custom_event_loop, executor
+        )
+
+    # error in encryption/upload
+    mock_compress_directory.side_effect = Exception("exception")
+    with pytest.raises(S3EncryptError):
+        await compress_encrypt_store(
+            directory, password, s3bucket, custom_event_loop, executor
+        )
+
+    # invalid directory
+    mock_validate_directory.side_effect = S3EncryptError("", Exception("exception"))
+    assert await compress_encrypt_store("", "", "", custom_event_loop, executor) == {}
+    mock_validate_directory.reset_mock()
+
+
 # don't use the pytest.asyncio default "event_loop" fixture
 # Use the customized event loop "custom_event_loop"
 @pytest.mark.asyncio
@@ -154,7 +165,6 @@ async def test_s3encrypt_async(
     mock_compress_encrypt_store, executor, shutdown_event, custom_event_loop,
 ) -> None:
 
-    assert True == inspect.isawaitable(mock_compress_encrypt_store())
     assert True == asyncio.iscoroutinefunction(mock_compress_encrypt_store)
 
     directories: typing.List[str] = []
@@ -218,17 +228,23 @@ async def test_s3encrypt_async(
     assert result["file1"] == "url1"
     assert result["file2"] == "url2"
 
-
-"""
     # error in s3encrypt_async
     mock_compress_encrypt_store.side_effect = Exception("exception 123")
-    res = await s3encrypt_async(directories, password, s3_bucket)
+    res = await s3encrypt_async(
+        shutdown_event, directories, password, s3_bucket, custom_event_loop, executor,
+    )
     assert "exception 123" in res.values()
 
     # error in s3encrypt_async
     with mock.patch("s3encrypt.s3encrypt.asyncio") as mock_asyncio:
         with pytest.raises(S3EncryptError):
             mock_asyncio.get_event_loop.side_effect = Exception("exception")
-            await s3encrypt_async(directories, password, s3_bucket)
-"""
+            await s3encrypt_async(
+                shutdown_event,
+                directories,
+                password,
+                s3_bucket,
+                custom_event_loop,
+                executor,
+            )
 

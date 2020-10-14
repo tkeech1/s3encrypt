@@ -118,31 +118,40 @@ def main() -> int:
         logger.info(f"Maximum number of directories is {directory_limit}")
         return 1
 
-    if args.mode == "watch":
-        # watch mode
-        logger.debug("Starting in WATCH mode")
-        watcher = DirectoryWatcher()
-        for directory in args.directories:
-            try:
-                directory = validate_directory(directory)
-            except S3EncryptError:
-                logger.info(f"{directory} is not a valid directory. Skipping.")
-                continue
-            logger.debug(f"Adding watch for {directory}")
-            watcher.add_watched_directory(directory, args.password, args.s3_bucket)
+    with ThreadPoolExecutor(max_workers=len(args.directories)) as executor:
 
-        logger.debug("Starting watch... ")
-        watcher.run()
-    else:
-        # store mode
-        logger.debug("Starting in STORE mode")
+        shutdown_event = asyncio.Event()
+        loop = async_helper.get_loop(shutdown_event, executor)
 
-        with ThreadPoolExecutor(max_workers=len(args.directories)) as executor:
+        try:
+            if args.mode == "watch":
+                # watch mode
+                logger.debug("Starting in WATCH mode")
+                watcher = DirectoryWatcher(loop, executor)
+                for directory in args.directories:
+                    try:
+                        directory = validate_directory(directory)
+                    except S3EncryptError:
+                        logger.info(f"{directory} is not a valid directory. Skipping.")
+                        continue
+                    logger.debug(f"Adding watch for {directory}")
+                    watcher.add_watched_directory(
+                        directory, args.password, args.s3_bucket
+                    )
+                logger.debug("Starting watch... ")
+                # the shutdown task waits for the shutdown_event to be set
+                # the shutdown_event can be set by:
+                # 1) exception
+                # 2) OS signal (ctrl-c)
 
-            shutdown_event = asyncio.Event()
-            loop = async_helper.get_loop(shutdown_event, executor)
+                # TODO - shutdown via OS signal not working
+                # loop.create_task(async_helper.shutdown(shutdown_event,
+                # loop, executor))
+                watcher.run()
+            else:
+                # store mode
+                logger.debug("Starting in STORE mode")
 
-            try:
                 # the shutdown task waits for the shutdown_event to be set
                 # the shutdown_event can be set by:
                 # 1) successful completion of tasks
@@ -166,12 +175,11 @@ def main() -> int:
 
                 # when the timeout expires, shutdown_event is set to trigger shutdown
                 loop.create_task(async_helper.timeout(shutdown_event, timeout=2))
-
                 loop.run_forever()
 
                 logger.debug("Done")
-            finally:
-                loop.close()
+        finally:
+            loop.close()
 
     return 0
 
