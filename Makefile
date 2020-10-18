@@ -13,8 +13,12 @@ run-module-watch: format lint test
 	python -m s3encrypt --log-level DEBUG --mode watch --directories testfiles/testzip testfiles/testzipsdsd2 --s3_bucket tdk-bd-keep.io --password 12345
 
 run-profile:	
-	python -m cProfile -s time -o profile.cprof runner.py
-	#pyprof2calltree -k -i profile.cprof
+	# write to file
+	python -m cProfile -s tottime -o profile.cprof -m s3encrypt --log-level INFO --directories testfiles/testzip --s3_bucket tdk-bd-keep.io --password 12345
+	# output only
+	# python -m cProfile -s tottime -m s3encrypt --log-level INFO --directories testfiles/testzip --s3_bucket tdk-bd-keep.io --password 12345
+	# run this locally to bring up kcachegrind
+	# pyprof2calltree -k -i profile.cprof
 
 run-profile-memory:	
 	python -m memory_profiler runner.py

@@ -36,6 +36,7 @@ import s3encrypt.async_helper as async_helper
 logger = logging.getLogger(__package__)
 
 
+# TODO - use Typer
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Zip, encrypt and store a directory to S3."
