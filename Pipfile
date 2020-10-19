@@ -20,11 +20,12 @@ pycodestyle = "*"
 pytest-xdist = "*"
 pyprof2calltree = "*"
 memory-profiler = "*"
+line-profiler = "*"
 
 [packages]
 argparse = "*"
 boto3 = ">=1.12.8"
-aws-encryption-sdk = ">=1.4.1"
+aws-encryption-sdk = "==1.4.1"
 watchdog = ">=0.10.3"
 typing-extensions = "*"
 # pipenv install typing_extensions git+https://github.com/Tinche/cattrs.git@v1.0.0#egg=cattrs

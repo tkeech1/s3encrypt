@@ -15,13 +15,15 @@ run-module-watch: format lint test
 run-profile:	
 	# write to file
 	python -m cProfile -s tottime -o profile.cprof -m s3encrypt --log-level INFO --directories testfiles/testzip --s3_bucket tdk-bd-keep.io --password 12345
-	# output only
-	# python -m cProfile -s tottime -m s3encrypt --log-level INFO --directories testfiles/testzip --s3_bucket tdk-bd-keep.io --password 12345
 	# run this locally to bring up kcachegrind
 	# pyprof2calltree -k -i profile.cprof
 
+run-line-profile:
+	kernprof -o s3encrypt.lprof -l line_prof.py
+	python -m line_profiler s3encrypt.lprof
+
 run-profile-memory:	
-	python -m memory_profiler runner.py
+	python -m memory_profiler line_prof.py
 
 # output a text formatted profile information
 run-profile-text:	
