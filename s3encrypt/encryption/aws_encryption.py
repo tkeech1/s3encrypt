@@ -7,6 +7,7 @@ import typing
 from aws_encryption_sdk.internal.crypto import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType
+from aws_encryption_sdk.identifiers import CommitmentPolicy
 from s3encrypt.encryption.base_encryption import EncryptionError, FileEncryptDecrypt
 
 logger = logging.getLogger(__name__)
@@ -48,13 +49,19 @@ class AWSEncryptionService(FileEncryptDecrypt):
 
     def __encrypt_decrypt_file(self, mode: str) -> None:
         try:
+            client = aws_encryption_sdk.EncryptionSDKClient(
+                commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+            )
+            print(f"client = {client}")
             master_key_provider = get_master_key_provider(self.key)
             with open(self.input_file_path, "rb") as input_text, open(
                 self.output_file_path, "wb"
             ) as output_text:
-                with aws_encryption_sdk.stream(
+                print(f"client.stream={client.stream}")
+                with client.stream(
                     mode=mode, source=input_text, key_provider=master_key_provider
                 ) as encryptor_decryptor:
+                    print(f"encryptor_decryptor={encryptor_decryptor}")
                     for index, chunk in enumerate(encryptor_decryptor):
                         output_text.write(chunk)
                         logger.debug(f"Wrote chunk {index}")

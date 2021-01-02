@@ -18,7 +18,9 @@ def test_get_master_key_provider(mock_zipfile: mock.Mock) -> None:
     assert len(raw_key._wrapping_key) == 32
 
 
-@mock.patch("s3encrypt.encryption.aws_encryption.aws_encryption_sdk.stream")
+@mock.patch(
+    "s3encrypt.encryption.aws_encryption.aws_encryption_sdk.EncryptionSDKClient"
+)
 def test_encrypt_decrypt_file(mock_stream: mock.Mock) -> None:
 
     encryption_factory = EncryptionFactory()
@@ -30,8 +32,9 @@ def test_encrypt_decrypt_file(mock_stream: mock.Mock) -> None:
     }
     aws_encryption = encryption_factory.create(key="aws", **config)
 
-    # aws_encryption = AWSEncryption(b"bytes", "somepath", "someotherpath")
-    mock_stream.return_value.__enter__.return_value = ["text to write"]
+    mock_stream.return_value.stream.return_value.__enter__.return_value = [
+        "text to write"
+    ]
     mock_open = mock.mock_open()
     mock_write = mock.mock_open(read_data="Data2").return_value
     mock_open.side_effect = [
@@ -51,7 +54,9 @@ def test_encrypt_decrypt_file(mock_stream: mock.Mock) -> None:
             assert isinstance(exception_info.value, EncryptionError)
 
 
-@mock.patch("s3encrypt.encryption.aws_encryption.aws_encryption_sdk.stream")
+@mock.patch(
+    "s3encrypt.encryption.aws_encryption.aws_encryption_sdk.EncryptionSDKClient"
+)
 def test_decrypt_file(mock_stream: mock.Mock) -> None:
     encryption_factory = EncryptionFactory()
     encryption_factory.register_builder("aws", AWSEncryptionServiceBuilder())
@@ -62,8 +67,9 @@ def test_decrypt_file(mock_stream: mock.Mock) -> None:
     }
 
     aws_encryption = encryption_factory.create(key="aws", **config)
-    # aws_encryption = AWSEncryption(b"bytes", "somepath", "someotherpath")
-    mock_stream.return_value.__enter__.return_value = ["text to write"]
+    mock_stream.return_value.stream.return_value.__enter__.return_value = [
+        "text to write"
+    ]
     mock_open = mock.mock_open()
     mock_write = mock.mock_open(read_data="Data2").return_value
     mock_open.side_effect = [

@@ -26,7 +26,7 @@ line-profiler = "*"
 argparse = "*"
 cryptography = ">=3.2"
 boto3 = ">=1.12.8"
-aws-encryption-sdk = "==1.7.1"
+aws-encryption-sdk = "==2.0.0"
 watchdog = ">=0.10.3"
 typing-extensions = "*"
 # pipenv install typing_extensions git+https://github.com/Tinche/cattrs.git@v1.0.0#egg=cattrs

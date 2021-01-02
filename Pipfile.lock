@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4a0584dd3697258b4cd4b42445deddfdd0d40fb904bd3dadc416f950068f14ac"
+            "sha256": "8b4eb0df28c4770dbe1cd72837bee93fb44d053a8706cb9cd1768456d512316f"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -32,11 +32,11 @@
         },
         "aws-encryption-sdk": {
             "hashes": [
-                "sha256:062c8eb3c2fcb2ff35364f08e691534df8fd6b9f443d00d513f23e91072a692e",
-                "sha256:674c47e2c775926f11652b7bac585667bb07ffb5fc7b512fefa1c4694a665586"
+                "sha256:7094dfdb05ff01c6f355136fce02e42350c62a80b64d078cf068785db8f80f92",
+                "sha256:e0b1da3f9791c18d9daf349f9c346254f8520e77dc411cf19c9b6ed1c547371f"
             ],
             "index": "pypi",
-            "version": "==1.7.1"
+            "version": "==2.0.0"
         },
         "boto3": {
             "hashes": [
