@@ -24,7 +24,6 @@ line-profiler = "*"
 
 [packages]
 argparse = "*"
-cryptography = ">=3.2"
 boto3 = ">=1.12.8"
 aws-encryption-sdk = "==2.0.0"
 watchdog = ">=0.10.3"
