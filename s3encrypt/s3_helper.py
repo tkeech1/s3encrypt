@@ -1,23 +1,24 @@
 import typing
 import logging
-import asyncio
 import os
 import zipfile
 import hashlib
 import boto3
 import botocore
+
 from s3encrypt.encryption.aws_encryption import AWSEncryptionServiceBuilder
 from s3encrypt.encryption.base_encryption import EncryptionFactory
-
+from s3encrypt.decorator import log_start_stop_time, async_log_start_stop_time
 from s3encrypt.temp_file import TempFile
 
 logger = logging.getLogger(__name__)
+
 
 encryption_factory = EncryptionFactory()
 encryption_factory.register_builder("aws-local", AWSEncryptionServiceBuilder())
 
 
-@profile
+@async_log_start_stop_time
 async def compress_encrypt_store(
     directory: str,
     password: str,
@@ -50,6 +51,7 @@ async def compress_encrypt_store(
         # create a tmpfile for the compressed file
         with TempFile() as compressed_file:
             compressed_file_path = compressed_file.temp_file_path
+            # _, compressed_file_path = tempfile.mkstemp()
             logger.debug(
                 f"Created tmp file {compressed_file_path} for compressed "
                 + f"archive of {directory}"
@@ -58,6 +60,7 @@ async def compress_encrypt_store(
             # create a tmpfile for the encrypted compressed file
             with TempFile() as encrypted_file:
                 encrypted_file_path = encrypted_file.temp_file_path
+                # _, encrypted_file_path = tempfile.mkstemp()
                 logger.debug(
                     f"Created tmp file {encrypted_file_path} for encrypted "
                     + f"compressed archive of {directory}"
@@ -110,7 +113,6 @@ async def compress_encrypt_store(
                     f"{directory} to {s3_bucket}",
                 )
 
-        shutdown_event.set()
         return {directory: s3_url}
 
     except Exception as e:
@@ -119,7 +121,7 @@ async def compress_encrypt_store(
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
-@profile
+@log_start_stop_time
 def validate_directory(directory: str) -> str:
     # remove the directory separator if it's the last character
     # in the directory name
@@ -135,7 +137,7 @@ def validate_directory(directory: str) -> str:
     return directory
 
 
-@profile
+@log_start_stop_time
 def compress_directory(directory: str, compressed_file_path: str) -> None:
     try:
 
@@ -155,7 +157,7 @@ def compress_directory(directory: str, compressed_file_path: str) -> None:
         raise S3EncryptError(" s3encrypt encountered an error ", e)
 
 
-@profile
+@log_start_stop_time
 def store_to_s3(file_path: str, s3_bucket: str, s3_object_key: str) -> str:
     try:
 
@@ -199,40 +201,3 @@ class S3EncryptError(Exception):
     def __init__(self, msg: str, original_exception: Exception = Exception()):
         super(S3EncryptError, self).__init__(f"{msg}: {original_exception}")
         self.original_exception = original_exception
-
-
-if __name__ == "__main__":
-
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Z %Y-%m-%d %H:%M:%S",
-    )
-
-    # log to console
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
-    import s3encrypt.async_helper as async_helper
-    from concurrent.futures import ThreadPoolExecutor
-
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        try:
-
-            shutdown_event = asyncio.Event()
-            loop = async_helper.get_loop(shutdown_event, executor)
-
-            loop.create_task(async_helper.shutdown(shutdown_event, loop, executor))
-
-            loop.create_task(
-                compress_encrypt_store(
-                    "testfiles/testzip", "12345", "tdk-bd-keep.io", loop, executor,
-                )
-            )
-
-            loop.run_forever()
-
-        finally:
-            loop.close()
-

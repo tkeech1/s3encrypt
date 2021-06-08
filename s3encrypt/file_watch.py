@@ -12,7 +12,7 @@ from watchdog.events import (
 from watchdog.observers import Observer
 import logging
 
-from s3encrypt.s3encrypt import compress_encrypt_store
+from s3encrypt.s3_helper import compress_encrypt_store
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,9 @@ class DirectoryWatcher(object):
     def __schedule(
         self, event_handler: DirectoryChangeEventHandler, src_path: str,
     ) -> None:
-        self.__event_observer.schedule(event_handler, src_path, recursive=True)
+        self.__event_observer.schedule(
+            event_handler, src_path, recursive=True,
+        )
 
 
 class DirectoryChangeEventHandler(FileSystemEventHandler):  # type: ignore

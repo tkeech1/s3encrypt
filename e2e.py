@@ -5,12 +5,9 @@ import zipfile
 import shutil
 import logging
 import hashlib
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from s3encrypt.s3encrypt import compress_encrypt_store
-from s3encrypt.async_helper import get_loop
 from s3encrypt.encryption.aws_encryption import AWSEncryptionServiceBuilder
 from s3encrypt.encryption.base_encryption import EncryptionFactory
+from s3encrypt.s3encrypt import encrypt_store
 
 logger = logging.getLogger(__package__)
 logger.setLevel(logging.INFO)
@@ -23,7 +20,7 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
-async def e2e():
+def e2e():
 
     tmp_dir_path = tempfile.mkdtemp()
     tmp_subdir_path = tempfile.mkdtemp(dir=tmp_dir_path)
@@ -50,10 +47,11 @@ async def e2e():
         # compress, encrypt and store in S3
         write_file(test_file_content, tmp_file_path)
         logger.info(f"Created tmp file")
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            shutdown_event = asyncio.Event()
-            loop = get_loop(shutdown_event, executor)
-            await compress_encrypt_store(tmp_dir_path, key, bucket, loop, executor)
+        # with ThreadPoolExecutor(max_workers=1) as executor:
+        #    shutdown_event = asyncio.Event()
+        #    loop = get_loop(shutdown_event, executor)
+        #    await compress_encrypt_store(tmp_dir_path, key, bucket, loop, executor)
+        encrypt_store([tmp_dir_path], "store", key, bucket)
 
         logger.info(f"Compressed, encrypted and uploaded to {bucket}")
 
@@ -115,4 +113,5 @@ def read_file_content(file_path: str) -> bytes:
 
 
 if __name__ == "__main__":
-    asyncio.run(e2e())
+    #asyncio.run(e2e())
+    e2e()

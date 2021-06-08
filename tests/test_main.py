@@ -1,26 +1,14 @@
 import unittest.mock as mock
-from unittest.mock import call
-from asyncio import Future
 import pytest
 
 from s3encrypt.__main__ import main
-from s3encrypt.s3encrypt import S3EncryptError
 
 
-@pytest.mark.asyncio
-@mock.patch("s3encrypt.__main__.DirectoryWatcher")
 @mock.patch("s3encrypt.__main__.sys")
-@mock.patch("s3encrypt.__main__.s3encrypt_async")
-@mock.patch("s3encrypt.__main__.validate_directory")
-@mock.patch("s3encrypt.__main__.logger")
-def test_main(
-    mock_logger: mock.Mock,
-    mock_validate_dir: mock.Mock,
-    mock_s3encrypt: mock.Mock,
-    mock_sys: mock.Mock,
-    mock_directory_watcher: mock.Mock,
-) -> None:
+@mock.patch("s3encrypt.__main__.encrypt_store")
+def test_main(mock_encrypt_store: mock.Mock, mock_sys: mock.Mock,) -> None:
 
+    # no arguments results in an error
     with pytest.raises(SystemExit):
         main()
 
@@ -37,8 +25,8 @@ def test_main(
         "pass",
     ]
 
-    mock_s3encrypt.return_value = None
-    main()
+    mock_encrypt_store.return_value = 0
+    assert main() == 0
 
     # logs an error because there are too many directories
     mock_sys.argv = [
@@ -60,73 +48,6 @@ def test_main(
     assert main() == 1
 
 
-@pytest.mark.asyncio
-@mock.patch("s3encrypt.__main__.DirectoryWatcher")
-@mock.patch("s3encrypt.__main__.sys")
-@mock.patch("s3encrypt.__main__.s3encrypt_async")
-@mock.patch("s3encrypt.__main__.validate_directory")
-@mock.patch("s3encrypt.__main__.logger")
-def test_main_watcher(
-    mock_logger: mock.Mock,
-    mock_validate_dir: mock.Mock,
-    mock_s3encrypt: mock.Mock,
-    mock_sys: mock.Mock,
-    mock_directory_watcher: mock.Mock,
-) -> None:
-    # adds two watchers
-    mock_sys.argv = [
-        "cmd",
-        "--mode",
-        "watch",
-        "--directories",
-        "/test",
-        "/test2",
-        "--s3_bucket",
-        "test",
-        "--password",
-        "pass",
-    ]
-    watcher_mock = mock.Mock()
-    mock_directory_watcher.return_value = watcher_mock
-    mock_validate_dir.side_effect = ["/test", "/test2"]
-    main()
-    watcher_mock.add_watched_directory.assert_has_calls(
-        [call("/test", "pass", "test"), call("/test2", "pass", "test")]
-    )
-
-
-@pytest.mark.asyncio
-@mock.patch("s3encrypt.__main__.DirectoryWatcher")
-@mock.patch("s3encrypt.__main__.sys")
-@mock.patch("s3encrypt.__main__.s3encrypt_async")
-@mock.patch("s3encrypt.__main__.validate_directory")
-@mock.patch("s3encrypt.__main__.logger")
-def test_main_invalid_directory(
-    mock_logger: mock.Mock,
-    mock_validate_dir: mock.Mock,
-    mock_s3encrypt: mock.Mock,
-    mock_sys: mock.Mock,
-    mock_directory_watcher: mock.Mock,
-) -> None:
-    # adds two watchers
-    mock_sys.argv = [
-        "cmd",
-        "--mode",
-        "watch",
-        "--directories",
-        "/test",
-        "--s3_bucket",
-        "test",
-        "--password",
-        "pass",
-    ]
-    watcher_mock = mock.Mock()
-    mock_directory_watcher.return_value = watcher_mock
-    mock_validate_dir.side_effect = S3EncryptError("exception")
-    main()
-    watcher_mock.asset_has_calls([])
-
-
 def test_init() -> None:
     from s3encrypt import __main__
 
@@ -135,3 +56,4 @@ def test_init() -> None:
             with mock.patch.object(__main__.sys, "exit") as mock_exit:
                 __main__.init()
                 mock_exit.assert_called_with(42)
+
